@@ -1,0 +1,86 @@
+version: 3
+
+services:
+  apiserver:
+    image: k8s.gcr.io/kube-apiserver:v1.20.2
+    entrypoint:
+      - kube-apiserver
+    command:
+      - --etcd-servers=http://etcd:2379
+      - --client-ca-file=/etc/kubernetes/pki/ca.crt
+      - --tls-cert-file=/etc/kubernetes/pki/server.crt
+      - --tls-private-key-file=/etc/kubernetes/pki/server.key
+      - --service-account-key-file=/etc/kubernetes/pki/sa.key
+      - --service-account-signing-key-file=/etc/kubernetes/pki/sa.key
+      - --service-account-issuer=https://localhost
+      - --anonymous-auth=false
+    volumes:
+      - ./kubernetes:/etc/kubernetes
+    ports:
+      - 6443:6443
+    healthcheck:
+      test: ["CMD-SHELL", "curl --insecure --fail http://localhost:6443/readyz || exit 1"]
+    depends_on:
+      - etcd
+
+  etcd:
+    image: k8s.gcr.io/etcd:3.4.13-0
+    entrypoint:
+      - etcd
+    command:
+      - --advertise-client-urls=http://etcd:2379
+
+  bot:
+    image: alertmanager_bot
+    build:
+      context: ../../
+      dockerfile: Dockerfile.dev
+    env_file:
+      - ./.env
+    entrypoint:
+      - /app/docker-entrypoint.sh
+    command:
+      - bot
+      - --log.level=debug
+      - --alertmanager.url=http://alertmanager:9093
+      - --alertmanager.secret-name=vmalertmanager-test
+      - --kube.config=/etc/kubernetes/admin.conf
+      - --kube.namespace=default
+      - --bot.token=${BOT_TOKEN}
+      - --user.registration-token=d4IRGKuCNJohuhCk7w0x9esfEItTgm98
+    volumes:
+      - ./kubernetes:/etc/kubernetes:ro
+      - ../../templates:/app/templates:ro
+      - ./bot:/app
+    depends_on:
+      - apiserver
+      - alertmanager
+
+  alertmanager:
+    image: quay.io/prometheus/alertmanager:v0.21.0
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --log.level=debug
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    ports:
+      - 9093:9093
+    healthcheck:
+      test: ["CMD-SHELL", "curl --insecure --fail http://localhost:9093/-/healthy || exit 1"]
+
+  syncer:
+    image: alertmanager_bot
+    build:
+      context: ../../
+      dockerfile: Dockerfile.dev
+    entrypoint:
+      - /usr/local/bin/alertmanager_config_updater
+    command:
+      - --kube.config=/etc/kubernetes/admin.conf
+      - --alertmanager.url=http://alertmanager:9093
+    volumes:
+      - ./kubernetes:/etc/kubernetes:ro
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    depends_on:
+      - apiserver
+      - alertmanager
