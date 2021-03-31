@@ -1,8 +1,9 @@
 FROM golang:1.16.0-buster as build
 
 WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
 COPY . .
-RUN go get -v ./...
 RUN go build -o ./alertmanager_bot ./cmd/bot
 
 
@@ -14,7 +15,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-
+COPY templates ./templates
 COPY --from=build /app/alertmanager_bot /usr/local/bin/
 
 ENTRYPOINT ["/usr/local/bin/alertmanager_bot"]

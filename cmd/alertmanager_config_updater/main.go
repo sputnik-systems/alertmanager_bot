@@ -26,7 +26,7 @@ func main() {
 	flag.StringVar(&kubeconfig, "kube.config", "", "path to kubeconfig")
 	flag.StringVar(&namespace, "kube.namespace", "default", "namespace name")
 	flag.StringVar(&secret, "kube.secret-name", "vmalertmanager-test", "secret name")
-	flag.StringVar(&config, "alertmanager.config", "/etc/alertmanager/alertmanager.yml", "path to alertmanager config")
+	flag.StringVar(&config, "alertmanager.config", "/etc/alertmanager/alertmanager.yaml", "path to alertmanager config")
 	flag.StringVar(&url, "alertmanager.url", "http://localhost:9093", "alertmanager url")
 	flag.Parse()
 
@@ -172,10 +172,10 @@ func (c *Controller) saveConfigToFile(key string) error {
 		var value []byte
 		var ok bool
 
-		if value, ok = obj.(*v1.Secret).Data["alertmanager.yml"]; !ok {
-			klog.Error("alertmanager.yml no found in secret")
+		if value, ok = obj.(*v1.Secret).Data["alertmanager.yaml"]; !ok {
+			klog.Error("alertmanager.yaml no found in secret")
 		} else {
-			klog.Info("overwriting alertmanager.yml from secret")
+			klog.Info("overwriting alertmanager.yaml from secret")
 			f, err := os.OpenFile(config, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, os.ModePerm)
 			if err != nil {
 				return fmt.Errorf("failed open config file: %s", err)

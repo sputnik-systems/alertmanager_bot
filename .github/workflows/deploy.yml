@@ -1,0 +1,46 @@
+name: deploy by tag
+
+on:
+  push:
+    tags:
+      - v*
+
+env:
+  WERF_RELEASE: alertmanager-bot
+  WERF_NAMESPACE: monitoring
+  WERF_SYNCHRONIZATION: kubernetes://monitoring
+  WERF_REPO: ${{ secrets.WERF_REPO }}
+  WERF_REPO_HARBOR_USERNAME: ${{ secrets.WERF_REPO_HARBOR_USERNAME }}
+  WERF_REPO_HARBOR_PASSWORD: ${{ secrets.WERF_REPO_HARBOR_PASSWORD }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Install werf CLI  
+        uses: werf/actions/install@v1.2
+
+      - name: Create kube config
+        run: |
+          KUBECONFIG=$(mktemp -d)/config
+          echo "${{ secrets.KUBECONFIG }}" > $KUBECONFIG
+          echo KUBECONFIG=$KUBECONFIG >> $GITHUB_ENV
+
+      - name: Login in docker registry
+        run: |
+          docker login --username="$WERF_REPO_HARBOR_USERNAME" --password="$WERF_REPO_HARBOR_PASSWORD" $WERF_REPO
+
+      - name: Run werf commands
+        run: |
+          source $(werf ci-env github --as-file)
+          werf converge \
+              --atomic --timeout=60 \
+              --set bot_token=${{ secrets.BOT_TOKEN }} \
+              --set user_register_token=${{ secrets.USER_REGISTER_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

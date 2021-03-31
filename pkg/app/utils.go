@@ -204,13 +204,13 @@ func getAlertmanagerConfig() (cfg *config.Config, err error) {
 		return nil, fmt.Errorf("failed to get alertmanager secret with config: %s", err)
 	}
 
-	if _, ok := s.Data["alertmanager.yml"]; !ok {
-		return nil, fmt.Errorf("secret not contain alertmanager.yml file")
+	if _, ok := s.Data["alertmanager.yaml"]; !ok {
+		return nil, fmt.Errorf("secret not contain alertmanager.yaml file")
 	}
 
-	cfg, err = config.Load(string(s.Data["alertmanager.yml"]))
+	cfg, err = config.Load(string(s.Data["alertmanager.yaml"]))
 	if err != nil {
-		return nil, fmt.Errorf("failed unmarshal alertmanager.yml file: %s", err)
+		return nil, fmt.Errorf("failed unmarshal alertmanager.yaml file: %s", err)
 	}
 
 	return cfg, nil
@@ -225,12 +225,12 @@ func writeAlertmanagerConfig(cfg *config.Config) error {
 		return fmt.Errorf("failed to get alertmanager secret with config: %s", err)
 	}
 
-	if _, ok := s.Data["alertmanager.yml"]; !ok {
-		return fmt.Errorf("secret not contain alertmanager.yml file")
+	if _, ok := s.Data["alertmanager.yaml"]; !ok {
+		return fmt.Errorf("secret not contain alertmanager.yaml file")
 	}
 
 	data := cfg.String()
-	s.Data["alertmanager.yml"] = []byte(data)
+	s.Data["alertmanager.yaml"] = []byte(data)
 
 	_, err = kubeCli.CoreV1().Secrets(namespace).Update(context.Background(), s, metav1.UpdateOptions{})
 	if err != nil {
