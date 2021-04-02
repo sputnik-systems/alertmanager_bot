@@ -1,0 +1,17 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMAlert
+metadata:
+  name: {{ include "alertmanager-bot.fullname" . }}
+  labels:
+    {{- include "alertmanager-bot.labels" . | nindent 4 }}
+spec:
+  replicaCount: 1
+
+  image:
+    tag: v1.56.0
+
+  datasource:
+    url: {{ default "http://vmsingle-default:8429" .Values.vmsingle }}
+
+  notifier:
+    url: http://vmalertmanager-{{ include "alertmanager-bot.fullname" . }}:9093

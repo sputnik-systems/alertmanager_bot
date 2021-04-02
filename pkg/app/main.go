@@ -36,7 +36,7 @@ func Execute() {
 	botRunCmd.PersistentFlags().String("alertmanager.secret-name", "", "alertmanager secret name which used to stora config")
 	botRunCmd.PersistentFlags().String("bot.token", "", "bot token string (required)")
 	botRunCmd.PersistentFlags().String("bot.templates-path", "templates/default.tmpl", "bot message templates path")
-	botRunCmd.PersistentFlags().String("bot.webhook-url", "http://bot:8080/webhook", "bot webhook url")
+	botRunCmd.PersistentFlags().String("bot.webhook-url", "http://bot:80/webhook", "bot webhook url")
 	botRunCmd.PersistentFlags().String("user.registration-token", "", "this token will be used when user try register")
 	botRunCmd.MarkPersistentFlagRequired("bot.token")
 	botRunCmd.MarkPersistentFlagRequired("alertmanager.secret-name")

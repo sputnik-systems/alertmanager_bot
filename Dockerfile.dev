@@ -5,8 +5,9 @@ WORKDIR /app
 RUN curl -s -L -o ./kubectl https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl \
     && chmod +x ./kubectl
 
+COPY go.mod go.sum ./
+RUN go mod download
 COPY . .
-RUN go get -v ./...
 RUN go build -o ./alertmanager_bot ./cmd/bot
 RUN go build -o ./alertmanager_config_updater ./cmd/alertmanager_config_updater
 

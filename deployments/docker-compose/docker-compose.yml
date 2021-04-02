@@ -59,7 +59,7 @@ services:
   alertmanager:
     image: quay.io/prometheus/alertmanager:v0.21.0
     command:
-      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --config.file=/etc/alertmanager/alertmanager.yaml
       - --log.level=debug
     volumes:
       - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
