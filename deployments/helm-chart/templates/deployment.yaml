@@ -36,10 +36,11 @@ spec:
           args:
             - bot
             - --log.level=debug
-            - --alertmanager.url=http://vmalertmanager-alertmanager-bot:9093
             - --alertmanager.secret-name=vmalertmanager-{{ include "alertmanager-bot.fullname" . }}
-            - --kube.namespace=$(NAMESPACE)
+            - --alertmanager.url=http://vmalertmanager-alertmanager-bot:9093
+            - --bot.webhook-url=http://{{ include "alertmanager-bot.fullname" . }}:80/webhook
             - --bot.token=$(BOT_TOKEN)
+            - --kube.namespace=$(NAMESPACE)
             - --user.registration-token=$(USER_REGISTER_TOKEN)
           env:
             - name: NAMESPACE
