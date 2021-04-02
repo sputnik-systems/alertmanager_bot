@@ -146,9 +146,14 @@ func (b *Bot) StartServer() {
 	var ch struct{}
 
 	http.HandleFunc("/webhook", b.webhookHandler)
-	log.Errorf("failed web server execution: %s", http.ListenAndServe(":8080", nil))
+	http.HandleFunc("/health", healthChekHandler)
+	log.Errorf("failed web server execution: %s", http.ListenAndServe(":80", nil))
 
 	b.done <- ch
+}
+
+func healthChekHandler(w http.ResponseWriter, r *http.Request) {
+	return
 }
 
 func (b *Bot) webhookHandler(w http.ResponseWriter, r *http.Request) {
