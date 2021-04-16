@@ -62,7 +62,7 @@ services:
       - --config.file=/etc/alertmanager/alertmanager.yaml
       - --log.level=debug
     volumes:
-      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./alertmanager/alertmanager.yaml:/etc/alertmanager/alertmanager.yaml:ro
     ports:
       - 9093:9093
     healthcheck:
@@ -80,7 +80,7 @@ services:
       - --alertmanager.url=http://alertmanager:9093
     volumes:
       - ./kubernetes:/etc/kubernetes:ro
-      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - ./alertmanager/alertmanager.yaml:/etc/alertmanager/alertmanager.yaml
     depends_on:
       - apiserver
       - alertmanager
