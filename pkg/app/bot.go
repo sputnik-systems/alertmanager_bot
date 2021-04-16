@@ -72,7 +72,16 @@ func NewBot(token string) (*Bot, error) {
 	// 	return nil, ftm.Errorf("failed set bot commands: %s", err)
 	// }
 
-	u := tgbotapi.NewUpdate(0)
+	u, err := tgbotapi.NewUpdateWithFilter(
+		0,
+		tgbotapi.UpdateType_Message,
+		tgbotapi.UpdateType_ChannelPost,
+		tgbotapi.UpdateType_CallbackQuery,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed init update config: %s", err)
+	}
+
 	u.Timeout = 60
 
 	updates, err := b.GetUpdatesChan(u)
@@ -147,7 +156,7 @@ func (b *Bot) StartServer() {
 
 	http.HandleFunc("/webhook", b.webhookHandler)
 	http.HandleFunc("/health", healthChekHandler)
-	log.Errorf("failed web server execution: %s", http.ListenAndServe(":80", nil))
+	log.Errorf("failed web server execution: %s", http.ListenAndServe(":8080", nil))
 
 	b.done <- ch
 }
@@ -191,64 +200,80 @@ func (b *Bot) webhookHandler(w http.ResponseWriter, r *http.Request) {
 
 func (b *Bot) UpdateHandler() {
 	for update := range b.updates {
+		message := getMessage(update)
+
 		switch {
 		case update.CallbackQuery != nil:
-			err := b.callbackQueryHandler(update)
+			err := b.callbackQueryHandler(update.CallbackQuery)
 			if err != nil {
 				log.Errorf("failed handle callback query: %s", err)
 			}
-		case update.Message.Text == "/stop":
+		case message == nil:
+			continue
+		case message.Text == "/stop":
 			// disable this receiver
 			// can be realized over removing routes only
 			// receiver should be kept
-			err := disableReceiver(update)
+			err := disableReceiver(message.Chat.ID)
 			if err != nil {
-				log.Errorf("failed to response %s command: %s", update.Message.Text, err)
+				log.Errorf("failed to response %s command: %s", message.Text, err)
 			}
 		// before handling this commands
 		// we must check that user registered
-		case update.Message.Text == "/start" ||
-			update.Message.Text == "/subscribe" ||
-			update.Message.Text == "/unsubscribe" ||
-			update.Message.Text == "/alerts":
-			err := b.proccessSecureCommands(update)
+		case message.Text == "/start" ||
+			message.Text == "/subscribe" ||
+			message.Text == "/unsubscribe" ||
+			message.Text == "/alerts":
+			err := b.proccessSecureCommands(message)
 			if err != nil {
 				log.Errorf("failed proccessing secure commands: %s", err)
 			}
 		default:
-			log.Debugf("user give message token: %s", update.Message.Text)
-			if chatPrevMessage[update.Message.Chat.ID] == "/start" &&
-				update.Message.Text == viper.GetString("user.registration-token") {
-				err := registerReceiver(update)
+			log.Debugf("user give message token: %s", message.Text)
+			if chatPrevMessage[message.Chat.ID] == "/start" &&
+				message.Text == viper.GetString("user.registration-token") {
+				err := registerReceiver(message.Chat.ID)
 				if err != nil {
-					log.Errorf("failed to response %s command: %s", update.Message.Text, err)
+					log.Errorf("failed to response %s command: %s", message.Text, err)
 				} else {
 					b.botAPI.Send(
-						tgbotapi.NewMessage(update.Message.Chat.ID, "You have been successfully registered"),
+						tgbotapi.NewMessage(message.Chat.ID, "You have been successfully registered"),
 					)
 				}
 			}
 
-			chatPrevMessage[update.Message.Chat.ID] = ""
+			chatPrevMessage[message.Chat.ID] = ""
 		}
 	}
 }
 
-func (b *Bot) proccessSecureCommands(update tgbotapi.Update) error {
-	exists, err := b.isReceiverExists(update)
+func getMessage(update tgbotapi.Update) *tgbotapi.Message {
+	var message *tgbotapi.Message
+	if update.Message != nil {
+		message = update.Message
+	} else if update.ChannelPost != nil {
+		message = update.ChannelPost
+	}
+
+	return message
+}
+
+func (b *Bot) proccessSecureCommands(message *tgbotapi.Message) error {
+	chatID := message.Chat.ID
+
+	exists, err := b.isReceiverExists(chatID)
 	if err != nil {
 		log.Errorf("failed to check receiver registration: %s", err)
 	}
 
-	chatID := update.Message.Chat.ID
 	if exists {
-		switch update.Message.Text {
+		switch message.Text {
 		case "/start":
 			b.botAPI.Send(tgbotapi.NewMessage(chatID, "You have already registered"))
 		case "/subscribe", "/unsubscribe":
-			err := b.getSubscriptionKB(update)
+			err := b.getSubscriptionKB(message)
 			if err != nil {
-				return fmt.Errorf("failed to response %s command: %s", update.Message.Text, err)
+				return fmt.Errorf("failed to response %s command: %s", message.Text, err)
 			}
 		case "/alerts":
 			err := b.getAlertMessage(chatID)
@@ -257,9 +282,9 @@ func (b *Bot) proccessSecureCommands(update tgbotapi.Update) error {
 			}
 		}
 	} else {
-		switch update.Message.Text {
+		switch message.Text {
 		case "/start":
-			chatPrevMessage[chatID] = update.Message.Text
+			chatPrevMessage[chatID] = message.Text
 			b.botAPI.Send(
 				tgbotapi.NewMessage(chatID, "Please give your token string in second message"),
 			)
@@ -312,11 +337,9 @@ func (b *Bot) getAlertMessage(chatID int64) error {
 	return nil
 }
 
-func (b *Bot) callbackQueryHandler(update tgbotapi.Update) error {
+func (b *Bot) callbackQueryHandler(query *tgbotapi.CallbackQuery) error {
 	var err error
 	var msg tgbotapi.MessageConfig
-
-	query := update.CallbackQuery
 
 	switch {
 	case query.Data == NextPage || query.Data == PrevPage:
@@ -364,22 +387,22 @@ func (b *Bot) callbackQueryHandler(update tgbotapi.Update) error {
 	return nil
 }
 
-func (b *Bot) getSubscriptionKB(update tgbotapi.Update) error {
+func (b *Bot) getSubscriptionKB(message *tgbotapi.Message) error {
 	var err error
 	var msg tgbotapi.MessageConfig
 
-	chatID := update.Message.Chat.ID
+	chatID := message.Chat.ID
 
-	switch update.Message.Text {
+	switch message.Text {
 	case "/subscribe":
 		msg = tgbotapi.NewMessage(chatID, "Available alert groups:")
-		kbPages[chatID], err = getAlertRuleGroupPages(update.Message.Text)
+		kbPages[chatID], err = getAlertRuleGroupPages(message.Text)
 		if err != nil {
 			return fmt.Errorf("failed get alert group keyborad buttons: %s", err)
 		}
 	case "/unsubscribe":
 		msg = tgbotapi.NewMessage(chatID, "Active alert groups:")
-		kbPages[chatID], err = getActiveSubscribePages(chatID, update.Message.Text)
+		kbPages[chatID], err = getActiveSubscribePages(chatID, message.Text)
 		if err != nil {
 			if err.Error() == "routes with this receiver not found" {
 				b.botAPI.Send(tgbotapi.NewMessage(chatID, "Active subscriptions not found"))
@@ -403,13 +426,12 @@ func (b *Bot) getSubscriptionKB(update tgbotapi.Update) error {
 	return nil
 }
 
-func (b *Bot) isReceiverExists(update tgbotapi.Update) (bool, error) {
+func (b *Bot) isReceiverExists(chatID int64) (bool, error) {
 	cfg, err := getAlertmanagerConfig()
 	if err != nil {
 		return false, fmt.Errorf("failed to get alertmanager url: %s", err)
 	}
 
-	chatID := update.Message.Chat.ID
 	r := strconv.FormatInt(chatID, 10)
 	if pos := getReceiverPosition(cfg, r); pos == -1 {
 		return false, nil
@@ -418,7 +440,7 @@ func (b *Bot) isReceiverExists(update tgbotapi.Update) (bool, error) {
 	return true, nil
 }
 
-func registerReceiver(update tgbotapi.Update) error {
+func registerReceiver(chatID int64) error {
 	var err error
 
 	cfg, err := getAlertmanagerConfig()
@@ -426,7 +448,7 @@ func registerReceiver(update tgbotapi.Update) error {
 		return fmt.Errorf("failed to get alertmanager config from specified secret: %s", err)
 	}
 
-	err = addReceiverToConfig(cfg, update.Message.Chat.ID)
+	err = addReceiverToConfig(cfg, chatID)
 	if err != nil {
 		return fmt.Errorf("failed to add receiver: %s", err)
 	}
@@ -439,7 +461,7 @@ func registerReceiver(update tgbotapi.Update) error {
 	return nil
 }
 
-func disableReceiver(update tgbotapi.Update) error {
+func disableReceiver(chatID int64) error {
 	var err error
 
 	cfg, err := getAlertmanagerConfig()
@@ -447,7 +469,7 @@ func disableReceiver(update tgbotapi.Update) error {
 		return fmt.Errorf("failed to get alertmanager config from specified secret: %s", err)
 	}
 
-	err = delAllRoutes(cfg, update.Message.Chat.ID)
+	err = delAllRoutes(cfg, chatID)
 	if err != nil {
 		return fmt.Errorf("failed deleting all routes for given receiver: %s", err)
 	}
