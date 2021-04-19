@@ -38,6 +38,9 @@ var (
 
 	subscribe *regexp.Regexp
 
+	// define regexp for commands
+	botCommandsRe map[string]*regexp.Regexp
+
 	// supported ssince v5.0.1
 	// https://github.com/go-telegram-bot-api/telegram-bot-api/pull/418
 	// need approving
@@ -130,10 +133,12 @@ func botPreRunE(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed default kube client init: %s", err)
 	}
 
-	subscribe, err = regexp.Compile(`^(?P<command>/(?:un)?subscribe):(?P<alertgroup>.+)$`)
-	if err != nil {
-		return fmt.Errorf("failed compile subscribe command regexp: %s", err)
+	botCommandsRe = make(map[string]*regexp.Regexp)
+	for _, command := range botCommands {
+		botCommandsRe[command.Command] = regexp.MustCompile(fmt.Sprintf(`^%s(@\w+)?`, command.Command))
 	}
+
+	subscribe = regexp.MustCompile(`^(?P<command>/(?:un)?subscribe):(?P<alertgroup>.+)$`)
 
 	kbPages = make(map[int64]*paginator.Paginator)
 	chatPrevMessage = make(map[int64]string)
@@ -217,7 +222,7 @@ func (b *Bot) UpdateHandler() {
 			}
 		case message == nil:
 			continue
-		case message.Text == "/stop":
+		case isCommand(message.Text, "/stop"):
 			// disable this receiver
 			// can be realized over removing routes only
 			// receiver should be kept
@@ -227,17 +232,17 @@ func (b *Bot) UpdateHandler() {
 			}
 		// before handling this commands
 		// we must check that user registered
-		case message.Text == "/start" ||
-			message.Text == "/subscribe" ||
-			message.Text == "/unsubscribe" ||
-			message.Text == "/alerts":
+		case isCommand(message.Text, "/alerts") ||
+			isCommand(message.Text, "/start") ||
+			isCommand(message.Text, "/subscribe") ||
+			isCommand(message.Text, "/unsubscribe"):
 			err := b.proccessSecureCommands(message)
 			if err != nil {
 				log.Errorf("failed proccessing secure commands: %s", err)
 			}
 		default:
 			log.Debugf("user give message token: %s", message.Text)
-			if chatPrevMessage[message.Chat.ID] == "/start" &&
+			if isCommand(chatPrevMessage[message.Chat.ID], "/start") &&
 				message.Text == viper.GetString("user.registration-token") {
 				err := registerReceiver(message.Chat.ID)
 				if err != nil {
@@ -252,6 +257,10 @@ func (b *Bot) UpdateHandler() {
 			chatPrevMessage[message.Chat.ID] = ""
 		}
 	}
+}
+
+func isCommand(text, command string) bool {
+	return botCommandsRe[command].Match([]byte(text))
 }
 
 func getMessage(update tgbotapi.Update) *tgbotapi.Message {
@@ -274,28 +283,28 @@ func (b *Bot) proccessSecureCommands(message *tgbotapi.Message) error {
 	}
 
 	if exists {
-		switch message.Text {
-		case "/start":
+		switch {
+		case isCommand(message.Text, "/start"):
 			b.botAPI.Send(tgbotapi.NewMessage(chatID, "You have already registered"))
-		case "/subscribe", "/unsubscribe":
+		case isCommand(message.Text, "/subscribe") || isCommand(message.Text, "/unsubscribe"):
 			err := b.getSubscriptionKB(message)
 			if err != nil {
 				return fmt.Errorf("failed to response %s command: %s", message.Text, err)
 			}
-		case "/alerts":
+		case isCommand(message.Text, "/alerts"):
 			err := b.getAlertMessage(chatID)
 			if err != nil {
 				return fmt.Errorf("failed to response /alerts command: %s\n", err)
 			}
 		}
 	} else {
-		switch message.Text {
-		case "/start":
+		switch {
+		case isCommand(message.Text, "/start"):
 			chatPrevMessage[chatID] = message.Text
 			b.botAPI.Send(
 				tgbotapi.NewMessage(chatID, "Please give your token string in second message"),
 			)
-		case "/subscribe", "/unsubscribe", "/alerts":
+		case isCommand(message.Text, "/subscribe") || isCommand(message.Text, "/unsubscribe") || isCommand(message.Text, "/alerts"):
 			b.botAPI.Send(
 				tgbotapi.NewMessage(chatID, "You should register to accessing this commands"),
 			)
@@ -400,14 +409,14 @@ func (b *Bot) getSubscriptionKB(message *tgbotapi.Message) error {
 
 	chatID := message.Chat.ID
 
-	switch message.Text {
-	case "/subscribe":
+	switch {
+	case isCommand(message.Text, "/subscribe"):
 		msg = tgbotapi.NewMessage(chatID, "Available alert groups:")
 		kbPages[chatID], err = getAlertRuleGroupPages(message.Text)
 		if err != nil {
 			return fmt.Errorf("failed get alert group keyborad buttons: %s", err)
 		}
-	case "/unsubscribe":
+	case isCommand(message.Text, "/unsubscribe"):
 		msg = tgbotapi.NewMessage(chatID, "Active alert groups:")
 		kbPages[chatID], err = getActiveSubscribePages(chatID, message.Text)
 		if err != nil {
