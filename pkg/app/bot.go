@@ -42,10 +42,13 @@ var (
 	// https://github.com/go-telegram-bot-api/telegram-bot-api/pull/418
 	// need approving
 	//
-	// botCommands []tgbotapi.BotCommand{
-	// 	tgbotapi.BotCommand{"/subscribe", "Subscribe to alert group"},
-	// 	tgbotapi.BotCommand{"/alerts", "List active alerts"},
-	// }
+	botCommands = []tgbotapi.BotCommand{
+		tgbotapi.BotCommand{"/subscribe", "Subscribe to alert group"},
+		tgbotapi.BotCommand{"/unsubscribe", "Unsubscribe to alert group"},
+		tgbotapi.BotCommand{"/alerts", "List active alerts"},
+		tgbotapi.BotCommand{"/start", "Register in alertmanager"},
+		tgbotapi.BotCommand{"/stop", "Disable any alerting"},
+	}
 )
 
 type Bot struct {
@@ -67,20 +70,24 @@ func NewBot(token string) (*Bot, error) {
 		b.Debug = true
 	}
 
-	// err = b.SetMyCommands(botCommands)
-	// if err != nil {
-	// 	return nil, ftm.Errorf("failed set bot commands: %s", err)
-	// }
-
-	u, err := tgbotapi.NewUpdateWithFilter(
-		0,
-		tgbotapi.UpdateType_Message,
-		tgbotapi.UpdateType_ChannelPost,
-		tgbotapi.UpdateType_CallbackQuery,
-	)
+	err = b.SetMyCommands(botCommands)
 	if err != nil {
-		return nil, fmt.Errorf("failed init update config: %s", err)
+		return nil, fmt.Errorf("failed set bot commands: %s", err)
 	}
+
+	u := tgbotapi.NewUpdate(0)
+	// you may setup filtering updated by type
+	// available in PR: https://github.com/go-telegram-bot-api/telegram-bot-api/pull/345
+	//
+	// u, err := tgbotapi.NewUpdateWithFilter(
+	// 	0,
+	// 	tgbotapi.UpdateType_Message,
+	// 	tgbotapi.UpdateType_ChannelPost,
+	// 	tgbotapi.UpdateType_CallbackQuery,
+	// )
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed init update config: %s", err)
+	// }
 
 	u.Timeout = 60
 
