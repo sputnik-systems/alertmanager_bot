@@ -22,6 +22,15 @@ import (
 	"github.com/sputnik-systems/alertmanager_bot/pkg/alertmanager"
 )
 
+func removeReceiverFromConfig(cfg *config.Config, receiver int64) error {
+	r := strconv.FormatInt(receiver, 10)
+	if pos := getReceiverPosition(cfg, r); pos != -1 {
+		cfg.Receivers[pos] = cfg.Receivers[len(cfg.Receivers)-1]
+		cfg.Receivers = cfg.Receivers[:len(cfg.Receivers)-1]
+	}
+	return nil
+}
+
 func addReceiverToConfig(cfg *config.Config, receiver int64) error {
 	wu, err := url.Parse(viper.GetString("bot.webhook-url"))
 	if err != nil {

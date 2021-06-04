@@ -490,6 +490,10 @@ func disableReceiver(chatID int64) error {
 		return fmt.Errorf("failed deleting all routes for given receiver: %s", err)
 	}
 
+	err = removeReceiverFromConfig(cfg, chatID)
+	if err != nil {
+		return fmt.Errorf("failed to remove receiver from config: %s", err)
+	}
 	err = writeAlertmanagerConfig(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to save alertmanger config: %s", err)
