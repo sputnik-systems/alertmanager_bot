@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -9,8 +10,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	"github.com/go-telegram-bot-api/telegram-bot-api"
 
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -46,11 +45,11 @@ var (
 	// need approving
 	//
 	botCommands = []tgbotapi.BotCommand{
-		tgbotapi.BotCommand{"/subscribe", "Subscribe to alert group"},
-		tgbotapi.BotCommand{"/unsubscribe", "Unsubscribe to alert group"},
-		tgbotapi.BotCommand{"/alerts", "List active alerts"},
-		tgbotapi.BotCommand{"/start", "Register in alertmanager"},
-		tgbotapi.BotCommand{"/stop", "Disable any alerting"},
+		{"/subscribe", "Subscribe to alert group"},
+		{"/unsubscribe", "Unsubscribe to alert group"},
+		{"/alerts", "List active alerts"},
+		{"/start", "Register in alertmanager"},
+		{"/stop", "Disable any alerting"},
 	}
 )
 

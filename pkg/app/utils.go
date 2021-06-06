@@ -8,8 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-telegram-bot-api/telegram-bot-api"
-
 	"github.com/spf13/viper"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
