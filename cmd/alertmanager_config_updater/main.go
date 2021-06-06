@@ -6,8 +6,7 @@ import (
 	"os"
 	"time"
 
-	"k8s.io/klog/v2"
-
+	"github.com/sputnik-systems/alertmanager_bot/pkg/alertmanager"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/runtime"
@@ -16,8 +15,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/workqueue"
-
-	"github.com/sputnik-systems/alertmanager_bot/pkg/alertmanager"
+	"k8s.io/klog/v2"
 )
 
 var kubeconfig, namespace, secret, config, url string
