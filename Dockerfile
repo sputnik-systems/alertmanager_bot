@@ -5,7 +5,7 @@ RUN apt update \
 
 WORKDIR /app
 COPY go.mod go.sum ./
-RUN go mod download
+RUN go mod download -x
 
 COPY . .
 RUN go build -o ./alertmanager_bot ./cmd/bot
