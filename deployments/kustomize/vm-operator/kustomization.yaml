@@ -1,0 +1,7 @@
+bases:
+- https://github.com/VictoriaMetrics/operator/config/crd?ref=v0.14.2
+- https://github.com/VictoriaMetrics/operator/config/rbac?ref=v0.14.2
+- https://github.com/VictoriaMetrics/operator/config/manager?ref=v0.14.2
+images:
+- name: victoriametrics/operator
+  newTag: v0.14.2

@@ -11,11 +11,8 @@ LOCAL_REGISTRATION_TOKEN :=
 kind: # init kind cluster if it does not exists and switch kubeconfig context
 		${KIND} get clusters | grep alertmanager-bot || ${KIND} create cluster --name ${KIND_CLUSTER_NAME}
 		${KUBECTL} config use-context kind-alertmanager-bot
-		${KUBECTL} apply -f deployments/manifests/namespace.yaml
-		${KUBECTL} kustomize https://github.com/VictoriaMetrics/operator/config/crd | ${KUBECTL} apply -f -
-		${KUBECTL} kustomize https://github.com/VictoriaMetrics/operator/config/rbac | ${KUBECTL} apply -f -
-		${KUBECTL} kustomize https://github.com/VictoriaMetrics/operator/config/manager | ${KUBECTL} apply -f -
-		${KUBECTL} apply -f deployments/manifests/vmrules
+		${KUBECTL} kustomize deployments/kustomize/vm-operator | ${KUBECTL} apply -f -
+		${KUBECTL} kustomize deployments/kustomize/vmrules | ${KUBECTL} apply -f -
 
 .PHONY: build-image
 build-image: # build docker image
