@@ -17,8 +17,7 @@ require (
 	github.com/spf13/afero v1.3.4 // indirect
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/viper v1.7.0
-	github.com/stretchr/testify v1.7.0 // indirect
-	github.com/technoweenie/multipartstreamer v1.0.1 // indirect
+	github.com/stretchr/testify v1.7.0
 	github.com/vcraescu/go-paginator/v2 v2.0.0
 	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
 	golang.org/x/net v0.0.0-20210220033124-5f55cee0dc0d // indirect
@@ -27,12 +26,10 @@ require (
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d // indirect
 	golang.org/x/text v0.3.5 // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
-	golang.org/x/tools v0.1.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
-	k8s.io/api v0.20.4
+	k8s.io/api v0.20.4 // indirect
 	k8s.io/apimachinery v0.20.4
 	k8s.io/client-go v12.0.0+incompatible
-	k8s.io/klog/v2 v2.4.0
 )
 
 replace (

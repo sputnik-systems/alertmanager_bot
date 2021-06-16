@@ -8,16 +8,13 @@ import (
 	"strconv"
 	"strings"
 
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/prometheus/alertmanager/config"
 	"github.com/spf13/viper"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
+	"github.com/sputnik-systems/alertmanager_bot/pkg/alertmanager"
 	"github.com/vcraescu/go-paginator/v2"
 	"github.com/vcraescu/go-paginator/v2/adapter"
-
-	"github.com/prometheus/alertmanager/config"
-
-	"github.com/sputnik-systems/alertmanager_bot/pkg/alertmanager"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func removeReceiverFromConfig(cfg *config.Config, receiver int64) error {

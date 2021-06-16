@@ -2,22 +2,19 @@ package app
 
 import (
 	"fmt"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
 
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-
-	"github.com/vcraescu/go-paginator/v2"
-
 	"github.com/sputnik-systems/alertmanager_bot/pkg/alertmanager"
 	"github.com/sputnik-systems/alertmanager_bot/pkg/kubernetes"
+	"github.com/vcraescu/go-paginator/v2"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 const (
