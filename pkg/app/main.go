@@ -8,18 +8,16 @@ import (
 	"github.com/spf13/viper"
 )
 
-var (
-	log *logrus.Logger
-)
+var log *logrus.Logger
 
 func Execute() {
-	var rootCmd = &cobra.Command{
+	rootCmd := &cobra.Command{
 		Use:               "alertmanager [subcommand]",
 		Short:             "alertmanager main command",
 		PersistentPreRunE: rootPreRunE,
 	}
 
-	var botRunCmd = &cobra.Command{
+	botRunCmd := &cobra.Command{
 		Use:     "bot",
 		Short:   "bot subcommand",
 		RunE:    botRunE,
