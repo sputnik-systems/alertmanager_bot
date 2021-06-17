@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/spf13/cobra"
@@ -48,6 +49,8 @@ var (
 		{"/start", "Register in alertmanager"},
 		{"/stop", "Disable any alerting"},
 	}
+
+	mux = &sync.Mutex{}
 )
 
 type Bot struct {
@@ -362,6 +365,9 @@ func (b *Bot) callbackQueryHandler(query *tgbotapi.CallbackQuery) error {
 			return fmt.Errorf("failed to get alertmanager config from specified secret: %s", err)
 		}
 
+		mux.Lock()
+		defer mux.Unlock()
+
 		r := subscribe.FindStringSubmatch(query.Data)
 		if r[1] == "/subscribe" {
 			err := addRoute(cfg, query.Message.Chat.ID, r[2])
@@ -460,6 +466,9 @@ func registerReceiver(chatID int64) error {
 		return fmt.Errorf("failed to get alertmanager config from specified secret: %s", err)
 	}
 
+	mux.Lock()
+	defer mux.Unlock()
+
 	err = addReceiverToConfig(cfg, chatID)
 	if err != nil {
 		return fmt.Errorf("failed to add receiver: %s", err)
@@ -480,6 +489,9 @@ func disableReceiver(chatID int64) error {
 	if err != nil {
 		return fmt.Errorf("failed to get alertmanager config from specified secret: %s", err)
 	}
+
+	mux.Lock()
+	defer mux.Unlock()
 
 	err = delAllRoutes(cfg, chatID)
 	if err != nil {
