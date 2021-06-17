@@ -8,19 +8,23 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-telegram-bot-api/telegram-bot-api"
-
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/prometheus/alertmanager/config"
 	"github.com/spf13/viper"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
+	"github.com/sputnik-systems/alertmanager_bot/pkg/alertmanager"
 	"github.com/vcraescu/go-paginator/v2"
 	"github.com/vcraescu/go-paginator/v2/adapter"
-
-	"github.com/prometheus/alertmanager/config"
-
-	"github.com/sputnik-systems/alertmanager_bot/pkg/alertmanager"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+func removeReceiverFromConfig(cfg *config.Config, receiver int64) error {
+	r := strconv.FormatInt(receiver, 10)
+	if pos := getReceiverPosition(cfg, r); pos != -1 {
+		cfg.Receivers[pos] = cfg.Receivers[len(cfg.Receivers)-1]
+		cfg.Receivers = cfg.Receivers[:len(cfg.Receivers)-1]
+	}
+	return nil
+}
 
 func addReceiverToConfig(cfg *config.Config, receiver int64) error {
 	wu, err := url.Parse(viper.GetString("bot.webhook-url"))

@@ -7,18 +7,14 @@ import (
 	"strconv"
 	"strings"
 
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	"github.com/go-telegram-bot-api/telegram-bot-api"
-
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-
-	"github.com/vcraescu/go-paginator/v2"
-
 	"github.com/sputnik-systems/alertmanager_bot/pkg/alertmanager"
 	"github.com/sputnik-systems/alertmanager_bot/pkg/kubernetes"
+	"github.com/vcraescu/go-paginator/v2"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 const (
@@ -46,11 +42,11 @@ var (
 	// need approving
 	//
 	botCommands = []tgbotapi.BotCommand{
-		tgbotapi.BotCommand{"/subscribe", "Subscribe to alert group"},
-		tgbotapi.BotCommand{"/unsubscribe", "Unsubscribe to alert group"},
-		tgbotapi.BotCommand{"/alerts", "List active alerts"},
-		tgbotapi.BotCommand{"/start", "Register in alertmanager"},
-		tgbotapi.BotCommand{"/stop", "Disable any alerting"},
+		{"/subscribe", "Subscribe to alert group"},
+		{"/unsubscribe", "Unsubscribe to alert group"},
+		{"/alerts", "List active alerts"},
+		{"/start", "Register in alertmanager"},
+		{"/stop", "Disable any alerting"},
 	}
 )
 
@@ -490,6 +486,10 @@ func disableReceiver(chatID int64) error {
 		return fmt.Errorf("failed deleting all routes for given receiver: %s", err)
 	}
 
+	err = removeReceiverFromConfig(cfg, chatID)
+	if err != nil {
+		return fmt.Errorf("failed to remove receiver from config: %s", err)
+	}
 	err = writeAlertmanagerConfig(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to save alertmanger config: %s", err)
