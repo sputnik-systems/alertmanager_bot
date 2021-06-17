@@ -137,7 +137,7 @@ func botPreRunE(cmd *cobra.Command, args []string) error {
 		botCommandsRe[command.Command] = regexp.MustCompile(fmt.Sprintf(`^%s(@\w+)?`, command.Command))
 	}
 
-	subscribe = regexp.MustCompile(`^(?P<command>/(?:un)?subscribe):(?P<alertgroup>.+)$`)
+	subscribe = regexp.MustCompile(`^(?P<command>/(?:un)?subscribe)(@\w+)?:(?P<alertgroup>.+)$`)
 
 	kbPages = make(map[int64]*paginator.Paginator)
 	chatPrevMessage = make(map[int64]string)
@@ -370,12 +370,12 @@ func (b *Bot) callbackQueryHandler(query *tgbotapi.CallbackQuery) error {
 
 		r := subscribe.FindStringSubmatch(query.Data)
 		if r[1] == "/subscribe" {
-			err := addRoute(cfg, query.Message.Chat.ID, r[2])
+			err := addRoute(cfg, query.Message.Chat.ID, r[len(r)-1])
 			if err != nil {
 				return fmt.Errorf("failed to add route: %s", err)
 			}
 		} else {
-			err := delRoute(cfg, query.Message.Chat.ID, r[2])
+			err := delRoute(cfg, query.Message.Chat.ID, r[len(r)-1])
 			if err != nil {
 				return fmt.Errorf("failed to del route: %s", err)
 			}
