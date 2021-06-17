@@ -4,6 +4,7 @@ KUBECTL := kubectl
 HELM := helm
 DOCKER_REGISTRY := sputniksystemsorg/alertmanager-bot
 DOCKER_IMAGE_TAG := $(shell git describe --tags)
+DOCKER_LOCAL_IMAGE_TAG := $(shell git describe --tags)-$(shell date +%s)
 LOCAL_BOT_TOKEN :=
 LOCAL_REGISTRATION_TOKEN :=
 
@@ -18,16 +19,20 @@ kind: # init kind cluster if it does not exists and switch kubeconfig context
 build-image: # build docker image
 		docker build -t ${DOCKER_REGISTRY}:${DOCKER_IMAGE_TAG} .
 
+.PHONY: build-local-image
+build-local-image: # build docker image
+		docker build -t ${DOCKER_REGISTRY}:${DOCKER_LOCAL_IMAGE_TAG} .
+
 .PHONY: local-deploy
 local-deploy:
-		${KIND} load docker-image --name ${KIND_CLUSTER_NAME} ${DOCKER_REGISTRY}:${DOCKER_IMAGE_TAG}
-		${HELM} upgrade --install --set bot_token="${LOCAL_BOT_TOKEN}",user_register_token="${LOCAL_REGISTRATION_TOKEN}",werf.image.bot="${DOCKER_REGISTRY}:${DOCKER_IMAGE_TAG}" alertmanager-bot ./deployments/helm-chart
+		${KIND} load docker-image --name ${KIND_CLUSTER_NAME} ${DOCKER_REGISTRY}:${DOCKER_LOCAL_IMAGE_TAG}
+		${HELM} upgrade --install --set bot_token="${LOCAL_BOT_TOKEN}",user_register_token="${LOCAL_REGISTRATION_TOKEN}",werf.image.bot="${DOCKER_REGISTRY}:${DOCKER_LOCAL_IMAGE_TAG}" alertmanager-bot ./deployments/helm-chart
 
 .PHONY: build
 build: build-image
 
 .PHONY: local
-local: kind build-image local-deploy
+local: kind build-local-image local-deploy
 
 .PHONY: clean
 clean:
