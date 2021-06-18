@@ -59,7 +59,10 @@ func TestRemoveReceiverFromConfig(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			removeReceiverFromConfig(tc.cfg_before, tc.receiver)
+			err := removeReceiverFromConfig(tc.cfg_before, tc.receiver)
+			if err != nil {
+				t.Errorf("failed remove receiver: %s", err)
+			}
 			assert.Equal(t, tc.cfg_before, tc.cfg_after)
 		})
 	}
