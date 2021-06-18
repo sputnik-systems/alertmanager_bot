@@ -43,11 +43,11 @@ var (
 	// need approving
 	//
 	botCommands = []tgbotapi.BotCommand{
-		{"/subscribe", "Subscribe to alert group"},
-		{"/unsubscribe", "Unsubscribe to alert group"},
-		{"/alerts", "List active alerts"},
-		{"/start", "Register in alertmanager"},
-		{"/stop", "Disable any alerting"},
+		{Command: "/subscribe", Description: "Subscribe to alert group"},
+		{Command: "/unsubscribe", Description: "Unsubscribe to alert group"},
+		{Command: "/alerts", Description: "List active alerts"},
+		{Command: "/start", Description: "Register in alertmanager"},
+		{Command: "/stop", Description: "Disable any alerting"},
 	}
 
 	mux = &sync.Mutex{}
@@ -156,10 +156,11 @@ func botRunE(cmd *cobra.Command, args []string) error {
 	go b.UpdateHandler()
 	go b.StartServer()
 
-	select {
-	case <-b.done:
+	for range b.done {
 		return fmt.Errorf("execution finished")
 	}
+
+	return nil
 }
 
 func (b *Bot) StartServer() {
@@ -173,7 +174,6 @@ func (b *Bot) StartServer() {
 }
 
 func healthChekHandler(w http.ResponseWriter, r *http.Request) {
-	return
 }
 
 func (b *Bot) webhookHandler(w http.ResponseWriter, r *http.Request) {
@@ -206,7 +206,10 @@ func (b *Bot) webhookHandler(w http.ResponseWriter, r *http.Request) {
 	msg := tgbotapi.NewMessage(chatID, text)
 	msg.ParseMode = tgbotapi.ModeHTML
 
-	b.botAPI.Send(msg)
+	_, err = b.botAPI.Send(msg)
+	if err != nil {
+		log.Errorf("failed to send bot message: %s", err)
+	}
 }
 
 func (b *Bot) UpdateHandler() {
@@ -247,9 +250,12 @@ func (b *Bot) UpdateHandler() {
 				if err != nil {
 					log.Errorf("failed to response %s command: %s", message.Text, err)
 				} else {
-					b.botAPI.Send(
+					_, err = b.botAPI.Send(
 						tgbotapi.NewMessage(message.Chat.ID, "You have been successfully registered"),
 					)
+					if err != nil {
+						log.Errorf("failed to send bot message: %s", err)
+					}
 				}
 			}
 
@@ -284,7 +290,10 @@ func (b *Bot) proccessSecureCommands(message *tgbotapi.Message) error {
 	if exists {
 		switch {
 		case isCommand(message.Text, "/start"):
-			b.botAPI.Send(tgbotapi.NewMessage(chatID, "You have already registered"))
+			_, err = b.botAPI.Send(tgbotapi.NewMessage(chatID, "You have already registered"))
+			if err != nil {
+				log.Errorf("failed to send bot message: %s", err)
+			}
 		case isCommand(message.Text, "/subscribe") || isCommand(message.Text, "/unsubscribe"):
 			err := b.getSubscriptionKB(message)
 			if err != nil {
@@ -300,13 +309,19 @@ func (b *Bot) proccessSecureCommands(message *tgbotapi.Message) error {
 		switch {
 		case isCommand(message.Text, "/start"):
 			chatPrevMessage[chatID] = message.Text
-			b.botAPI.Send(
+			_, err = b.botAPI.Send(
 				tgbotapi.NewMessage(chatID, "Please give your token string in second message"),
 			)
+			if err != nil {
+				log.Errorf("failed to send bot message: %s", err)
+			}
 		case isCommand(message.Text, "/subscribe") || isCommand(message.Text, "/unsubscribe") || isCommand(message.Text, "/alerts"):
-			b.botAPI.Send(
+			_, err = b.botAPI.Send(
 				tgbotapi.NewMessage(chatID, "You should register to accessing this commands"),
 			)
+			if err != nil {
+				log.Errorf("failed to send bot message: %s", err)
+			}
 		}
 	}
 
@@ -347,7 +362,10 @@ func (b *Bot) getAlertMessage(chatID int64) error {
 	msg := tgbotapi.NewMessage(chatID, text)
 	msg.ParseMode = tgbotapi.ModeHTML
 
-	b.botAPI.Send(msg)
+	_, err = b.botAPI.Send(msg)
+	if err != nil {
+		log.Errorf("failed to send bot message: %s", err)
+	}
 
 	return nil
 }
@@ -392,15 +410,21 @@ func (b *Bot) callbackQueryHandler(query *tgbotapi.CallbackQuery) error {
 	}
 
 	// delete old message
-	b.botAPI.DeleteMessage(
+	_, err = b.botAPI.DeleteMessage(
 		tgbotapi.DeleteMessageConfig{
 			ChatID:    query.Message.Chat.ID,
 			MessageID: query.Message.MessageID,
 		},
 	)
+	if err != nil {
+		log.Errorf("failed to delete given message: %s", err)
+	}
 
 	// and send new one
-	b.botAPI.Send(msg)
+	_, err = b.botAPI.Send(msg)
+	if err != nil {
+		log.Errorf("failed to send bot message: %s", err)
+	}
 
 	return nil
 }
@@ -423,7 +447,10 @@ func (b *Bot) getSubscriptionKB(message *tgbotapi.Message) error {
 		kbPages[chatID], err = getActiveSubscribePages(chatID, message.Text)
 		if err != nil {
 			if err.Error() == "routes with this receiver not found" {
-				b.botAPI.Send(tgbotapi.NewMessage(chatID, "Active subscriptions not found"))
+				_, err = b.botAPI.Send(tgbotapi.NewMessage(chatID, "Active subscriptions not found"))
+				if err != nil {
+					log.Errorf("failed to send bot message: %s", err)
+				}
 			}
 
 			return fmt.Errorf("failed get active subscriptions keyboard: %s", err)
@@ -439,7 +466,10 @@ func (b *Bot) getSubscriptionKB(message *tgbotapi.Message) error {
 		kb...,
 	)
 
-	b.botAPI.Send(msg)
+	_, err = b.botAPI.Send(msg)
+	if err != nil {
+		log.Errorf("failed to send bot message: %s", err)
+	}
 
 	return nil
 }
@@ -545,7 +575,10 @@ func getKeyboardNextPage(query *tgbotapi.CallbackQuery) (msg tgbotapi.MessageCon
 
 func addPosButtons(chatID int64) ([][]tgbotapi.InlineKeyboardButton, error) {
 	kb := make([][]tgbotapi.InlineKeyboardButton, 0)
-	(*kbPages[chatID]).Results(&kb)
+	err := (*kbPages[chatID]).Results(&kb)
+	if err != nil {
+		return nil, err
+	}
 
 	hasNext, err := (*kbPages[chatID]).HasNext()
 	if err != nil {

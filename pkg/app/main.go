@@ -10,7 +10,7 @@ import (
 
 var log *logrus.Logger
 
-func Execute() {
+func Execute() error {
 	rootCmd := &cobra.Command{
 		Use:               "alertmanager [subcommand]",
 		Short:             "alertmanager main command",
@@ -25,7 +25,10 @@ func Execute() {
 	}
 
 	rootCmd.PersistentFlags().String("log.level", "info", "log level")
-	viper.BindPFlag("log.level", rootCmd.PersistentFlags().Lookup("log.level"))
+	err := viper.BindPFlag("log.level", rootCmd.PersistentFlags().Lookup("log.level"))
+	if err != nil {
+		return fmt.Errorf("failed to bind flag: %s", err)
+	}
 
 	botRunCmd.PersistentFlags().String("kube.config", "", "specify current k8s kubeconfig")
 	botRunCmd.PersistentFlags().String("kube.namespace", "default", "specify current k8s namespace")
@@ -36,23 +39,45 @@ func Execute() {
 	botRunCmd.PersistentFlags().String("bot.templates-path", "templates/default.tmpl", "bot message templates path")
 	botRunCmd.PersistentFlags().String("bot.webhook-url", "http://bot:8080/webhook", "bot webhook url")
 	botRunCmd.PersistentFlags().String("user.registration-token", "", "this token will be used when user try register")
-	botRunCmd.MarkPersistentFlagRequired("bot.token")
-	botRunCmd.MarkPersistentFlagRequired("alertmanager.secret-name")
-	botRunCmd.MarkPersistentFlagRequired("user.registration-token")
 
-	viper.BindPFlag("kube.config", botRunCmd.PersistentFlags().Lookup("kube.config"))
-	viper.BindPFlag("kube.namespace", botRunCmd.PersistentFlags().Lookup("kube.namespace"))
-	viper.BindPFlag("kube.selector", botRunCmd.PersistentFlags().Lookup("kube.selector"))
-	viper.BindPFlag("alertmanager.url", botRunCmd.PersistentFlags().Lookup("alertmanager.url"))
-	viper.BindPFlag("alertmanager.secret-name", botRunCmd.PersistentFlags().Lookup("alertmanager.secret-name"))
-	viper.BindPFlag("bot.token", botRunCmd.PersistentFlags().Lookup("bot.token"))
-	viper.BindPFlag("bot.templates-path", botRunCmd.PersistentFlags().Lookup("bot.templates-path"))
-	viper.BindPFlag("bot.webhook-url", botRunCmd.PersistentFlags().Lookup("bot.webhook-url"))
-	viper.BindPFlag("user.registration-token", botRunCmd.PersistentFlags().Lookup("user.registration-token"))
+	persistentRequiredFlags := []string{
+		"bot.token",
+		"alertmanager.secret-name",
+		"user.registration-token",
+	}
+	for _, value := range persistentRequiredFlags {
+		err = botRunCmd.MarkPersistentFlagRequired(value)
+		if err != nil {
+			return fmt.Errorf("failed to mark flag \"%s\" persistent: %s", value, err)
+		}
+	}
+
+	bindFlags := []string{
+		"kube.config",
+		"kube.namespace",
+		"kube.selector",
+		"alertmanager.url",
+		"alertmanager.secret-name",
+		"bot.token",
+		"bot.templates-path",
+		"bot.webhook-url",
+		"user.registration-token",
+	}
+	for _, value := range bindFlags {
+		err = viper.BindPFlag(value, botRunCmd.PersistentFlags().Lookup(value))
+		if err != nil {
+			return fmt.Errorf("failed to bind flag \"%s\": %s", value, err)
+		}
+	}
 
 	rootCmd.AddCommand(botRunCmd)
 
-	rootCmd.Execute()
+	err = rootCmd.Execute()
+	if err != nil {
+		return fmt.Errorf("failed to execute command: %s", err)
+	}
+
+	return nil
 }
 
 func rootPreRunE(cmd *cobra.Command, args []string) error {
