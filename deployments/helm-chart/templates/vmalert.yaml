@@ -8,10 +8,13 @@ spec:
   replicaCount: 1
 
   image:
-    tag: v1.56.0
+    tag: {{ .Values.vmalert.tag }}
 
   datasource:
     url: {{ default "http://vmsingle-default:8429" .Values.vmsingle }}
 
   notifier:
     url: http://vmalertmanager-{{ include "alertmanager-bot.fullname" . }}:9093
+
+  extraArgs:
+    {{- toYaml .Values.vmalert.extraArgs | nindent 4 }}

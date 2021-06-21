@@ -13,7 +13,9 @@ kind: # init kind cluster if it does not exists and switch kubeconfig context
 		${KIND} get clusters | grep alertmanager-bot || ${KIND} create cluster --name ${KIND_CLUSTER_NAME}
 		${KUBECTL} config use-context kind-alertmanager-bot
 		${KUBECTL} kustomize deployments/kustomize/vm-operator | ${KUBECTL} apply -f -
-		${KUBECTL} kustomize deployments/kustomize/vmrules | ${KUBECTL} apply -f -
+		${KUBECTL} kustomize deployments/kustomize | ${KUBECTL} apply -f -
+		${HELM} repo add grafana https://grafana.github.io/helm-charts
+		${HELM} upgrade --install --values deployments/helm.grafana.values.yaml grafana grafana/grafana
 
 .PHONY: build-image
 build-image: # build docker image

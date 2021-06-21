@@ -14,3 +14,10 @@ Cleaning environment:
 ```
 make clean
 ```
+
+## Grafana
+Now grafana will be installed at enviromnent init step(`make kind`) with user/pass `admin/admin`.
+<br>You can use kubectl port-forward for accessing to it:
+```
+kubectl port-forward svc/grafana 8080:80
+```
