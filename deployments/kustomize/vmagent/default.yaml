@@ -1,0 +1,13 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMAgent
+metadata:
+  name: default
+spec:
+  image:
+    tag: v1.61.1
+
+  remoteWrite:
+    - queueConfig:
+        maxSamplesPerSend: 10000
+        maxShards: 30
+      url: http://vmsingle-default:8429/api/v1/write

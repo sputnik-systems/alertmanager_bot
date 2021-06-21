@@ -1,3 +1,4 @@
 resources:
-- alertmanager.rules.yaml
-- etcd.yaml
+  - alertmanager.rules.yaml
+  - etcd.yaml
+  - kube-apiserver.yaml

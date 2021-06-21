@@ -1,0 +1,15 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: kube-apiserver
+spec:
+  groups:
+  - name: kube-apiserver
+    rules:
+    - alert: kubeApiUp
+      annotations:
+        message: 'kubernetes apiserver up and running.'
+      expr: up{job="apiserver"} == 1
+      for: 1m
+      labels:
+        severity: info

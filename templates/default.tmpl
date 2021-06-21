@@ -1,9 +1,6 @@
 {{ define "telegram.default" }}
 {{ range .Alerts }}
-{{/*
 <b>status:</b> {{ if eq .Status "firing" }}🔥 <b>{{ .Status | toUpper }}</b> 🔥{{ else }}<b>{{ .Status | toUpper }}</b>{{ end }} | 📈 <a href="{{ .GeneratorURL }}">Graph</a>
-*/}}
-<b>status:</b> {{ if eq .Status "firing" }}🔥 <b>{{ .Status | toUpper }}</b> 🔥{{ else }}<b>{{ .Status | toUpper }}</b>{{ end }}
 <b>severity:</b> {{ .Labels.severity }}
 <b>summary:</b> {{ .Annotations.summary }}
 <b>description:</b> {{ .Annotations.description }}
