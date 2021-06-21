@@ -1,0 +1,9 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMSingle
+metadata:
+  name: default
+spec:
+  image:
+    tag: v1.61.1
+
+  retentionPeriod: "1"

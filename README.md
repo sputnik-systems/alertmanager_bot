@@ -17,3 +17,11 @@ make clean
 ```
 make LOCAL_BOT_TOKEN="my-bot-toke" local-deploy
 ```
+
+## Grafana
+Grafana устанавливается в kind на этапе инициализации(команда `make kind`). Логин/пароль по умолчанию: admin/admin
+<br>Чтобы попасть в веб-интерфейс grafana нужно будет выполнить проброс порта к себе:
+```
+kubectl port-forward svc/grafana 8080:80
+```
+Пока данная команда выполняется, проброс активен и к веб-интерфейсу grafana можно обратиться по адресу [localhost:8080](http://localhost:8080)

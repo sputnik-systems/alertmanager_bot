@@ -79,3 +79,10 @@ alertmanager:
         target_match:
           severity: 'warning'
         equal: ['alertname', 'dev', 'instance']
+
+vmalert:
+  tag: v1.61.1
+
+  extraArgs:
+    external.url: https://grafana.sputnik.systems
+    external.alert.source: 'explore?orgId=1&left=["now-1h","now","VictoriaMetrics",{"expr": "{{$expr|quotesEscape|crlfEscape|queryEscape}}"},{"mode":"Metrics"},{"ui":[true,true,true,"none"]}]'
