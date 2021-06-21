@@ -85,4 +85,4 @@ vmalert:
 
   extraArgs:
     external.url: https://grafana.sputnik.systems
-    external.alert.source: 'explore?orgId=1&left=["now-1h","now","VictoriaMetrics",{"expr": "{{$expr|quotesEscape|crlfEscape|queryEscape}}"},{"mode":"Metrics"},{"ui":[true,true,true,"none"]}]'
+    external.alert.source: 'explore?orgId=1&left=["now-1h","now","VictoriaMetrics",{"expr":"{{$expr|quotesEscape|crlfEscape|queryEscape}}"},{"mode":"Metrics"},{"ui":[true,true,true,"none"]}]'
