@@ -10,8 +10,8 @@ LOCAL_REGISTRATION_TOKEN := d4IRGKuCNJohuhCk7w0x9esfEItTgm98
 
 .PHONY: kind
 kind: # init kind cluster if it does not exists and switch kubeconfig context
-		${KIND} get clusters | grep alertmanager-bot || ${KIND} create cluster --name ${KIND_CLUSTER_NAME}
-		${KUBECTL} config use-context kind-alertmanager-bot
+		${KIND} get clusters | grep ${KIND_CLUSTER_NAME} || ${KIND} create cluster --name ${KIND_CLUSTER_NAME}
+		${KUBECTL} config use-context kind-${KIND_CLUSTER_NAME}
 		${KUBECTL} kustomize deployments/kustomize/vm-operator | ${KUBECTL} apply -f -
 		${KUBECTL} kustomize deployments/kustomize | ${KUBECTL} apply -f -
 		${HELM} repo add grafana https://grafana.github.io/helm-charts
