@@ -438,13 +438,13 @@ func (b *Bot) getSubscriptionKB(message *tgbotapi.Message) error {
 	switch {
 	case isCommand(message.Text, "/subscribe"):
 		msg = tgbotapi.NewMessage(chatID, "Available alert groups:")
-		kbPages[chatID], err = getAlertRuleGroupPages(message.Text)
+		kbPages[chatID], err = getAlertRuleGroupPages("/subscribe")
 		if err != nil {
 			return fmt.Errorf("failed get alert group keyborad buttons: %s", err)
 		}
 	case isCommand(message.Text, "/unsubscribe"):
 		msg = tgbotapi.NewMessage(chatID, "Active alert groups:")
-		kbPages[chatID], err = getActiveSubscribePages(chatID, message.Text)
+		kbPages[chatID], err = getActiveSubscribePages(chatID, "/unsubscribe")
 		if err != nil {
 			if err.Error() == "routes with this receiver not found" {
 				_, err = b.botAPI.Send(tgbotapi.NewMessage(chatID, "Active subscriptions not found"))
