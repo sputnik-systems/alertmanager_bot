@@ -11,7 +11,7 @@ spec:
     tag: {{ .Values.vmalert.tag }}
 
   datasource:
-    url: {{ default "http://vmsingle-default:8429" .Values.vmsingle }}
+    url: {{ default "http://vmsingle-default:8429" .Values.victoriametrics.url }}
 
   notifier:
     url: http://vmalertmanager-{{ include "alertmanager-bot.fullname" . }}:9093
