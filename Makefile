@@ -27,15 +27,15 @@ build-local-image: # build docker image
 		docker build -t ${DOCKER_REGISTRY}:${DOCKER_LOCAL_IMAGE_TAG} .
 
 .PHONY: local-deploy
-local-deploy:
-		${MINIKUBE} image load --profile ${MINIKUBE_PROFILE_NAME} ${MINIKUBE_CLUSTER_NAME} ${DOCKER_REGISTRY}:${DOCKER_LOCAL_IMAGE_TAG}
+local-deploy: build-local-image
+		${MINIKUBE} image load --profile ${MINIKUBE_PROFILE_NAME} ${DOCKER_REGISTRY}:${DOCKER_LOCAL_IMAGE_TAG}
 		${HELM} upgrade --install --set bot_token="${LOCAL_BOT_TOKEN}",user_register_token="${LOCAL_REGISTRATION_TOKEN}",werf.image.bot="${DOCKER_REGISTRY}:${DOCKER_LOCAL_IMAGE_TAG}" alertmanager-bot ./deployments/helm-chart
 
 .PHONY: build
 build: build-image
 
 .PHONY: local
-local: minikube build-local-image local-deploy
+local: minikube local-deploy
 
 .PHONY: clean
 clean:
