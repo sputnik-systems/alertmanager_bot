@@ -3,23 +3,22 @@ package alertmanager
 import (
 	"fmt"
 	"net/url"
-	"strconv"
 
 	"github.com/prometheus/common/model"
 )
 
-func GetMessageText(templatesPath, alertmanagerUrl string, receiver int64, alerts []*model.Alert) (string, error) {
-	tmpl, err := FromGlobs(templatesPath)
+func (a *Alertmanager) GetMessageText(receiver string, alerts []*model.Alert) (string, error) {
+	tmpl, err := FromGlobs(a.tp)
 	if err != nil {
 		return "", fmt.Errorf("failed to read template files: %s", err)
 	}
 
-	tmpl.ExternalURL, err = url.Parse(alertmanagerUrl)
+	tmpl.ExternalURL, err = url.Parse(a.url)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse alertmanager url: %s", err)
 	}
 
-	data := tmpl.Data(strconv.FormatInt(receiver, 10), nil, alerts...)
+	data := tmpl.Data(receiver, nil, alerts...)
 	out, err := tmpl.ExecuteHTMLString(`{{ template "telegram.default" . }}`, data)
 	if err != nil {
 		return "", fmt.Errorf("failed to apply template: %s", err)

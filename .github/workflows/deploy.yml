@@ -41,7 +41,6 @@ jobs:
           source $(werf ci-env github --as-file)
           werf converge \
               --atomic --timeout=60 \
-              --set bot_token=${{ secrets.BOT_TOKEN }} \
-              --set user_register_token=${{ secrets.USER_REGISTER_TOKEN }}
+              --set bot_token=${{ secrets.BOT_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ github.token }}

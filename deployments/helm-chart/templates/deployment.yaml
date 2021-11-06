@@ -41,7 +41,6 @@ spec:
             - --bot.webhook-url=http://{{ include "alertmanager-bot.fullname" . }}:80/webhook
             - --bot.token=$(BOT_TOKEN)
             - --kube.namespace=$(NAMESPACE)
-            - --user.registration-token=$(USER_REGISTER_TOKEN)
           env:
             - name: NAMESPACE
               valueFrom:
@@ -52,11 +51,6 @@ spec:
                 secretKeyRef:
                   name: {{ include "alertmanager-bot.fullname" . }}
                   key: bot_token
-            - name: USER_REGISTER_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "alertmanager-bot.fullname" . }}
-                  key: user_register_token
           ports:
             - name: http
               containerPort: 8000

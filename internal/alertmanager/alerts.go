@@ -32,10 +32,10 @@ func (r *Receivers) contains(receiver string) bool {
 }
 
 // ListAlerts returns a slice of Alert and an error.
-func ListAlerts(url, receiver string, params map[string]string) ([]*model.Alert, error) {
+func (a *Alertmanager) ListAlerts(receiver string, params map[string]string) ([]*model.Alert, error) {
 	req, err := http.NewRequest(
 		http.MethodGet,
-		fmt.Sprintf("%s/api/v1/alerts", url),
+		fmt.Sprintf("%s/api/v1/alerts", a.url),
 		nil,
 	)
 	if err != nil {

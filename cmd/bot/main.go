@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/sputnik-systems/alertmanager_bot/pkg/app"
+	"github.com/sputnik-systems/alertmanager_bot/internal/app"
 )
 
 func main() {
