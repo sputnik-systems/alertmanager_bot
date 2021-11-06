@@ -39,6 +39,10 @@ jobs:
           source $(werf ci-env github --as-file)
           werf converge \
               --atomic --timeout=60 \
-              --set bot_token=${{ secrets.BOT_TOKEN }}
+              --set bot.token=${{ secrets.BOT_TOKEN }}
+              --set bot.publicURL=${{ secrets.BOT_PUBLIC_URL }} \
+              --set oidc.issuerURL=${{ secrets.OIDC_ISSUER_URL }} \
+              --set oidc.clientID=${{ secrets.OIDC_CLIENT_ID }} \
+              --set oidc.clientSecret=${{ secrets.OIDC_CLIENT_SECRET }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
