@@ -1,6 +1,6 @@
 {{- if .Values.rbac.enabled }}
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
   name: {{ include "alertmanager-bot.fullname" . }}
   labels:
