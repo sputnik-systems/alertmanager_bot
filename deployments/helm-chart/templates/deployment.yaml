@@ -59,7 +59,7 @@ spec:
                   key: user_register_token
           ports:
             - name: http
-              containerPort: 8080
+              containerPort: 8000
               protocol: TCP
           livenessProbe:
             httpGet:
