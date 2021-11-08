@@ -16,6 +16,10 @@ import (
 	"github.com/sputnik-systems/alertmanager_bot/internal/alertmanager"
 )
 
+const (
+	CallbackLimit = 64
+)
+
 var (
 	cmds = []telebot.Command{
 		{Text: "/start", Description: "Register in alertmanager"},
