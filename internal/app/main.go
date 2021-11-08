@@ -32,7 +32,11 @@ func Execute() error {
 	botRunCmd.PersistentFlags().String("alertmanager.secret-name", "", "alertmanager secret name which used to stora config")
 	botRunCmd.PersistentFlags().String("bot.token", "", "bot token string (required)")
 	botRunCmd.PersistentFlags().String("bot.templates-path", "templates/default.tmpl", "bot message templates path")
-	botRunCmd.PersistentFlags().String("bot.webhook-url", "http://bot:8080/webhook", "bot webhook url")
+	botRunCmd.PersistentFlags().String("bot.webhook-url", "http://bot:8000/webhook", "bot webhook url")
+	botRunCmd.PersistentFlags().String("bot.public-url", "http://localhost:8000", "bot webserver public url")
+	botRunCmd.PersistentFlags().String("oidc.issuer-url", "", "OpenID issuer url")
+	botRunCmd.PersistentFlags().String("oidc.client-id", "", "OpenID auth client ID")
+	botRunCmd.PersistentFlags().String("oidc.client-secret", "", "OpenID auth client secret")
 
 	persistentRequiredFlags := []string{
 		"bot.token",
@@ -52,6 +56,10 @@ func Execute() error {
 		"bot.token",
 		"bot.templates-path",
 		"bot.webhook-url",
+		"bot.public-url",
+		"oidc.issuer-url",
+		"oidc.client-id",
+		"oidc.client-secret",
 	}
 	for _, value := range bindFlags {
 		err = viper.BindPFlag(value, botRunCmd.PersistentFlags().Lookup(value))

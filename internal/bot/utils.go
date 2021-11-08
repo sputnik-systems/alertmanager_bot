@@ -16,6 +16,8 @@ import (
 
 var (
 	ErrAuth = errors.New("authorization required")
+
+	AuthFlowTextTemplate = `First you have to go auth <a href="%s?receiver=%d">flow</a>.`
 )
 
 func init() {
@@ -185,7 +187,7 @@ func (b *Bot) checkAuth(receiver int64) error {
 		return err
 	} else if !ok {
 		id := telebot.ChatID(receiver)
-		if _, err := b.b.Send(id, "first you have to go auth flow"); err != nil {
+		if _, err := b.b.Send(id, fmt.Sprintf(AuthFlowTextTemplate, RegistrationURL, receiver)); err != nil {
 			return err
 		} else {
 			return ErrAuth

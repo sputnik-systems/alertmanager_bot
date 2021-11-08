@@ -31,16 +31,23 @@ spec:
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.werf.image.bot }}"
+          image: {{ include "alertmanager-bot.image.name" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - bot
-            - --log.level=debug
             - --alertmanager.secret-name=vmalertmanager-{{ include "alertmanager-bot.fullname" . }}
             - --alertmanager.url=http://vmalertmanager-alertmanager-bot:9093
-            - --bot.webhook-url=http://{{ include "alertmanager-bot.fullname" . }}:80/webhook
+            - --bot.webhook-url={{ include "alertmanager-bot.webhookURL" . }}
+            {{- if .Values.bot.publicURL }}
+            - --bot.public-url={{ .Values.bot.publicURL }}
+            {{- end }}
             - --bot.token=$(BOT_TOKEN)
             - --kube.namespace=$(NAMESPACE)
+            {{- if .Values.oidc.enabled }}
+            - --oidc.issuer-url=$(OIDC_ISSUER_URL)
+            - --oidc.client-id=$(OIDC_CLIENT_ID)
+            - --oidc.client-secret=$(OIDC_CLIENT_SECRET)
+            {{- end }}
           env:
             - name: NAMESPACE
               valueFrom:
@@ -51,6 +58,23 @@ spec:
                 secretKeyRef:
                   name: {{ include "alertmanager-bot.fullname" . }}
                   key: bot_token
+            {{- if .Values.oidc.enabled }}
+            - name: OIDC_ISSUER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "alertmanager-bot.fullname" . }}
+                  key: oidc_issuer_url
+            - name: OIDC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "alertmanager-bot.fullname" . }}
+                  key: oidc_client_id
+            - name: OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "alertmanager-bot.fullname" . }}
+                  key: oidc_client_secret
+            {{- end }}
           ports:
             - name: http
               containerPort: 8000

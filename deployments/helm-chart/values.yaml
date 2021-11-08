@@ -5,6 +5,7 @@
 replicaCount: 1
 
 image:
+  repository: sputniksystemsorg/alertmanager-bot
   pullPolicy: IfNotPresent
 
 imagePullSecrets: []
@@ -57,6 +58,16 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+bot:
+  token: ""
+  publicURL: ""
+
+oidc:
+  enabled: false
+  issuerURL: ""
+  clientID: ""
+  clientSecret: ""
 
 alertmanager:
   config: |+

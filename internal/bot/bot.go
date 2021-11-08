@@ -24,6 +24,8 @@ var (
 		{Text: "/unsubscribe", Description: "Unsubscribe to alert group"},
 		{Text: "/alerts", Description: "List active alerts"},
 	}
+
+	RegistrationURL = "http://example.org:8000/auth/simple"
 )
 
 type Bot struct {
@@ -95,18 +97,22 @@ func (b *Bot) ProcessWebhook(alerts []*model.Alert, receiver string) error {
 	return err
 }
 
-func (b *Bot) handleStartCommand(m telebot.Context) error {
-	receiver := m.Chat().ID
-	if err := b.checkAuth(receiver); err != nil {
-		return err
-	}
-
+func (b *Bot) RegisterReceiver(receiver int64) error {
 	if err := b.ac.Config.RegisterReceiver(receiver); err != nil {
 		return err
 	}
 
 	if _, err := b.ac.Reload(); err != nil {
 		return fmt.Errorf("failed to reload alertmanager: %s", err)
+	}
+
+	return nil
+}
+
+func (b *Bot) handleStartCommand(m telebot.Context) error {
+	receiver := m.Chat().ID
+	if err := b.checkAuth(receiver); err != nil {
+		return err
 	}
 
 	return nil
