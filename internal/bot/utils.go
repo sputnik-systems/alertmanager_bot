@@ -32,12 +32,17 @@ func (b *Bot) createAlertRuleGroupPages(receiver int64) error {
 	}
 
 	var buttons [][]telebot.InlineButton
-
+	length := CallbackLimit - len("\f/subscribe")
 	for _, name := range groups {
+		data := name
+		if len(data) >= length {
+			data = data[:length-1]
+		}
+
 		buttons = append(
 			buttons,
 			[]telebot.InlineButton{
-				{Unique: "/subscribe", Text: name, Data: name},
+				{Unique: "/subscribe", Text: name, Data: data},
 			},
 		)
 	}
@@ -59,13 +64,19 @@ func (b *Bot) makeActiveSubscribePages(receiver int64) error {
 
 	var buttons [][]telebot.InlineButton
 	r := strconv.FormatInt(receiver, 10)
+	length := CallbackLimit - len("\f/unsubscribe")
 	for _, value := range conf.Route.Routes {
 		if value.Receiver == r {
 			name := value.Match["alertgroup"]
+			data := name
+			if len(data) >= length {
+				data = data[:length-1]
+			}
+
 			buttons = append(
 				buttons,
 				[]telebot.InlineButton{
-					{Unique: "/unsubscribe", Text: name, Data: name},
+					{Unique: "/unsubscribe", Text: name, Data: data},
 				},
 			)
 		}
