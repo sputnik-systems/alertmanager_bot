@@ -1,7 +1,0 @@
-project: alertmanager-bot
-configVersion: 1
-deploy:
-  helmChartDir: deployments/helm-chart
----
-image: bot
-dockerfile: Dockerfile

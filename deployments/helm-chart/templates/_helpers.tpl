@@ -62,9 +62,6 @@ Create the name of the service account to use
 {{- end }}
 
 {{- define "alertmanager-bot.image.name" -}}
-{{- if .Values.werf -}}
-{{- .Values.werf.image.bot -}}
-{{- else -}}
 {{- if .Values.image.tag -}}
 {{- printf "%s:%s" .Values.image.repository .Values.image.tag -}}
 {{- else -}}
