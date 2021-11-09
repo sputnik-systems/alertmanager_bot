@@ -36,7 +36,7 @@ spec:
           args:
             - bot
             - --alertmanager.secret-name=vmalertmanager-{{ include "alertmanager-bot.fullname" . }}
-            - --alertmanager.url=http://vmalertmanager-alertmanager-bot:9093
+            - --alertmanager.url={{ include "alertmanager-bot.alertmanagerURL" . }}
             - --bot.webhook-url={{ include "alertmanager-bot.webhookURL" . }}
             {{- if .Values.bot.publicURL }}
             - --bot.public-url={{ .Values.bot.publicURL }}
