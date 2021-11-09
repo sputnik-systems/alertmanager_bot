@@ -150,7 +150,12 @@ func oidcCallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := tb.RegisterReceiver(receiver); err != nil {
 		log.Printf("failed to register receiver %d: %s", receiver, err)
+
+		return
 	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Success"))
 }
 
 func generateStateOauthCookie(w http.ResponseWriter, receiver string) string {
