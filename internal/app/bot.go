@@ -188,4 +188,7 @@ func simpleRegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	if err := tb.RegisterReceiver(id); err != nil {
 		log.Printf("failed to register receiver %d: %s", id, err)
 	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Success"))
 }

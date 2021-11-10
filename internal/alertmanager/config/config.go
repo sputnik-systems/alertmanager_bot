@@ -2,16 +2,22 @@ package config
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/url"
 	"strconv"
+	"strings"
 	"sync"
 
 	amcfg "github.com/prometheus/alertmanager/config"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+var (
+	ErrNotFound = errors.New("not found")
 )
 
 type Config struct {
@@ -71,15 +77,9 @@ func (c *Config) DisableReceiver(receiver int64) error {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
-	err = delAllRoutes(conf, receiver)
-	if err != nil {
-		return fmt.Errorf("failed deleting all routes for given receiver: %s", err)
-	}
-
-	err = removeReceiver(conf, receiver)
-	if err != nil {
-		return fmt.Errorf("failed to remove receiver from config: %s", err)
-	}
+	r := strconv.FormatInt(receiver, 10)
+	conf.Route.Routes = removeAllRoutes(conf.Route.Routes, r)
+	conf.Receivers = removeReceiver(conf.Receivers, r)
 
 	err = c.write(conf)
 	if err != nil {
@@ -96,14 +96,28 @@ func (c *Config) IsReceiverExists(receiver int64) (bool, error) {
 	}
 
 	r := strconv.FormatInt(receiver, 10)
-	if p := getReceiverPosition(conf, r); p == -1 {
+	if p := getReceiverPosition(conf.Receivers, r); p == -1 {
 		return false, nil
 	}
 
 	return true, nil
 }
 
-func (c *Config) AddRoute(receiver int64, group string) error {
+func (c *Config) IsRouteExists(receiver int64, match map[string]string) (bool, error) {
+	conf, err := c.Get()
+	if err != nil {
+		return false, fmt.Errorf("failed to get alertmanager config from specified secret: %s", err)
+	}
+
+	r := strconv.FormatInt(receiver, 10)
+	if p := getRoutePosition(conf.Route.Routes, r, match); p == -1 {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func (c *Config) AddRoute(receiver int64, match map[string]string) error {
 	conf, err := c.Get()
 	if err != nil {
 		return fmt.Errorf("failed to get alertmanager config from specified secret: %s", err)
@@ -113,14 +127,15 @@ func (c *Config) AddRoute(receiver int64, group string) error {
 	defer c.mux.Unlock()
 
 	r := strconv.FormatInt(receiver, 10)
-	match := make(map[string]string)
-	match["alertgroup"] = group
-
 	p := getRoutePosition(conf.Route.Routes, r, match)
 	if p != -1 {
-		log.Printf("route already exists: %s/%s", r, group)
+		log.Printf("route %s with match %v already exists", r, match)
 
 		return nil
+	}
+
+	if match == nil {
+		conf.Route.Routes = removeAllRoutes(conf.Route.Routes, r)
 	}
 
 	route := &amcfg.Route{
@@ -139,7 +154,7 @@ func (c *Config) AddRoute(receiver int64, group string) error {
 	return nil
 }
 
-func (c *Config) RemoveRoute(receiver int64, group string) error {
+func (c *Config) RemoveRoute(receiver int64, match map[string]string) error {
 	conf, err := c.Get()
 	if err != nil {
 		return fmt.Errorf("failed to get alertmanager config from specified secret: %s", err)
@@ -149,12 +164,9 @@ func (c *Config) RemoveRoute(receiver int64, group string) error {
 	defer c.mux.Unlock()
 
 	r := strconv.FormatInt(receiver, 10)
-	match := make(map[string]string)
-	match["alertgroup"] = group
-
 	p := getRoutePosition(conf.Route.Routes, r, match)
 	if p == -1 {
-		log.Printf("receiver doesn't have routes now: %s/%s", r, group)
+		log.Printf("route %s with match %v doesn't exists", r, match)
 
 		return nil
 	}
@@ -168,6 +180,26 @@ func (c *Config) RemoveRoute(receiver int64, group string) error {
 	}
 
 	return nil
+}
+
+func (c *Config) FindMatchByPrefix(receiver int64, prefix string) (map[string]string, error) {
+	conf, err := c.Get()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get alertmanager config from specified secret: %s", err)
+	}
+
+	c.mux.Lock()
+	defer c.mux.Unlock()
+
+	r := strconv.FormatInt(receiver, 10)
+	routes := listRoutes(conf.Route.Routes, r)
+	for _, value := range routes {
+		if group, ok := value.match["alertgroup"]; ok && strings.HasPrefix(group, prefix) {
+			return value.match, nil
+		}
+	}
+
+	return nil, ErrNotFound
 }
 
 func (c *Config) getSecret() (*v1.Secret, error) {
@@ -218,7 +250,7 @@ func (c *Config) write(conf *amcfg.Config) error {
 
 func (c *Config) addReceiver(conf *amcfg.Config, receiver int64) error {
 	r := strconv.FormatInt(receiver, 10)
-	if pos := getReceiverPosition(conf, r); pos == -1 {
+	if pos := getReceiverPosition(conf.Receivers, r); pos == -1 {
 		rc := &amcfg.Receiver{
 			Name:           r,
 			WebhookConfigs: c.wh,
