@@ -50,40 +50,6 @@ func getRoutePosition(in []*amcfg.Route, receiver string, match map[string]strin
 	return -1
 }
 
-func removeReceiver(in []*amcfg.Receiver, receiver string) []*amcfg.Receiver {
-	var out []*amcfg.Receiver
-
-	if p := getReceiverPosition(in, receiver); p != -1 {
-		out = make([]*amcfg.Receiver, 0)
-		for index, value := range in {
-			if int64(index) != p {
-				out = append(out, value)
-			}
-		}
-
-		return out
-	}
-
-	return nil
-}
-
-func removeRoute(in []*amcfg.Route, receiver string, match map[string]string) []*amcfg.Route {
-	var out []*amcfg.Route
-
-	if p := getRoutePosition(in, receiver, match); p != -1 {
-		out = make([]*amcfg.Route, 0)
-		for index, value := range in {
-			if int64(index) != p {
-				out = append(out, value)
-			}
-		}
-
-		return out
-	}
-
-	return nil
-}
-
 func removeAllRoutes(in []*amcfg.Route, receiver string) []*amcfg.Route {
 	var out []*amcfg.Route
 

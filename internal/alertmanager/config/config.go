@@ -79,7 +79,13 @@ func (c *Config) DisableReceiver(receiver int64) error {
 
 	r := strconv.FormatInt(receiver, 10)
 	conf.Route.Routes = removeAllRoutes(conf.Route.Routes, r)
-	conf.Receivers = removeReceiver(conf.Receivers, r)
+
+	p := getReceiverPosition(conf.Receivers, r)
+	if p == -1 {
+		return ErrNotFound
+	}
+	conf.Receivers[p] = conf.Receivers[len(conf.Receivers)-1]
+	conf.Receivers = conf.Receivers[:len(conf.Receivers)-1]
 
 	err = c.write(conf)
 	if err != nil {

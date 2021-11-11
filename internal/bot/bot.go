@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"sync"
@@ -52,7 +53,9 @@ type Bot struct {
 
 func init() {
 	// hack for support victorimaetrics custom resources with kube client
-	vm.AddToScheme(scheme.Scheme)
+	if err := vm.AddToScheme(scheme.Scheme); err != nil {
+		panic(err)
+	}
 }
 
 func New(token, au, wu, tp string, ac types.NamespacedName, kc client.Client) (*Bot, error) {
@@ -274,7 +277,11 @@ func (b *Bot) handleCallback(m telebot.Context) error {
 	// 		return fmt.Errorf("failed to delete old message: %s", err)
 	// 	}
 	// }
-	defer m.Delete()
+	defer func() {
+		if err := m.Delete(); err != nil {
+			log.Printf("failed to delete callback message: %s", err)
+		}
+	}()
 
 	callback := m.Callback()
 	n := strings.Index(callback.Data, "|")
@@ -286,7 +293,9 @@ func (b *Bot) handleCallback(m telebot.Context) error {
 
 	switch unique {
 	case "/page":
-		b.switchPage(receiver, data)
+		if err := b.switchPage(receiver, data); err != nil {
+			return fmt.Errorf("failed to change keyboard page: %s", err)
+		}
 
 		ikb, err := b.addPositionButtons(receiver)
 		if err != nil {
@@ -302,7 +311,9 @@ func (b *Bot) handleCallback(m telebot.Context) error {
 
 		match := make(map[string]string)
 		match["alertgroup"] = group
-		b.ac.Config.AddRoute(receiver, match)
+		if err := b.ac.Config.AddRoute(receiver, match); err != nil {
+			return err
+		}
 
 		if _, err = b.ac.Reload(); err != nil {
 			return fmt.Errorf("failed to reload alertmanager: %s", err)
@@ -313,7 +324,9 @@ func (b *Bot) handleCallback(m telebot.Context) error {
 			return fmt.Errorf("failed to get match for given alert group prefix: %s", err)
 		}
 
-		b.ac.Config.RemoveRoute(receiver, match)
+		if err := b.ac.Config.RemoveRoute(receiver, match); err != nil {
+			return err
+		}
 
 		if _, err = b.ac.Reload(); err != nil {
 			return fmt.Errorf("failed to reload alertmanager: %s", err)
