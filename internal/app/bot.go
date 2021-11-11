@@ -155,7 +155,9 @@ func oidcCallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Success"))
+	if _, err := w.Write([]byte("Success")); err != nil {
+		log.Printf("failed to write response body: %s", err)
+	}
 }
 
 func generateStateOauthCookie(w http.ResponseWriter, receiver string) string {
@@ -172,7 +174,9 @@ func generateStateOauthCookie(w http.ResponseWriter, receiver string) string {
 func simpleRegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	if viper.GetString("oidc.issuer-url") != "" {
 		w.WriteHeader(http.StatusForbidden)
-		w.Write([]byte("Simple registration is not supported with another auth types"))
+		if _, err := w.Write([]byte("Simple registration is not supported with another auth types")); err != nil {
+			log.Printf("failed to write response body: %s", err)
+		}
 
 		return
 	}
@@ -190,5 +194,7 @@ func simpleRegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Success"))
+	if _, err := w.Write([]byte("Success")); err != nil {
+		log.Printf("failed to write response body: %s", err)
+	}
 }
