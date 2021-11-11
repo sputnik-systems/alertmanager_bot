@@ -29,15 +29,17 @@ var (
 	cmds = []telebot.Command{
 		{Text: "/start", Description: "Register in alertmanager"},
 		{Text: "/stop", Description: "Disable any alerting"},
-		{Text: "/subscribe", Description: "Subscribe to alert group"},
-		{Text: "/unsubscribe", Description: "Unsubscribe to alert group"},
+		{Text: "/subscribe", Description: "Subscribe to some alert group"},
+		{Text: "/subscribeall", Description: "Subscribe to all alert groups"},
+		{Text: "/unsubscribe", Description: "Revoke subscribtion"},
 		{Text: "/alerts", Description: "List active alerts"},
 	}
 
 	RegistrationURL      = "http://example.org:8000/auth/simple"
 	AuthFlowTextTemplate = `First you have to go auth <a href="%s?receiver=%d">flow</a>.`
 
-	ErrAuth = errors.New("authorization required")
+	ErrAuth     = errors.New("authorization required")
+	ErrNotFound = errors.New("no one alert group found")
 )
 
 type Bot struct {
@@ -82,6 +84,7 @@ func New(token, au, wu, tp string, ac types.NamespacedName, kc client.Client) (*
 	tb.Handle("/start", b.handleStartCommand)
 	tb.Handle("/stop", b.handleStopCommand)
 	tb.Handle("/subscribe", b.handleSubscribeCommand)
+	tb.Handle("/subscribeall", b.handleSubscribeAllCommand)
 	tb.Handle("/unsubscribe", b.handleUnsubscribeCommand)
 	tb.Handle("/alerts", b.handleAlertsCommand)
 
@@ -132,7 +135,7 @@ func (b *Bot) handleStartCommand(m telebot.Context) error {
 		return err
 	}
 
-	return nil
+	return m.Send("You are already logined")
 }
 
 func (b *Bot) handleStopCommand(m telebot.Context) error {
@@ -158,6 +161,12 @@ func (b *Bot) handleSubscribeCommand(m telebot.Context) error {
 		return err
 	}
 
+	if ok, err := b.ac.Config.IsRouteExists(receiver, nil); ok {
+		return m.Send("You are already subscribed for all alert groups. Unsubscribe first.")
+	} else if err != nil {
+		return fmt.Errorf("failed checking route existence: %s", err)
+	}
+
 	if err := b.createAlertRuleGroupPages(receiver); err != nil {
 		return fmt.Errorf("failed to create alert rule groups pages: %s", err)
 	}
@@ -174,10 +183,39 @@ func (b *Bot) handleSubscribeCommand(m telebot.Context) error {
 	return m.Send("Available alert groups:", &telebot.ReplyMarkup{InlineKeyboard: ikb})
 }
 
+func (b *Bot) handleSubscribeAllCommand(m telebot.Context) error {
+	receiver := m.Chat().ID
+	if err := b.checkAuth(receiver); err != nil {
+		return err
+	}
+
+	if ok, err := b.ac.Config.IsRouteExists(receiver, nil); ok {
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("failed checking route existence: %s", err)
+	}
+
+	if err := b.ac.Config.AddRoute(receiver, nil); err != nil {
+		return fmt.Errorf("failed adding route for all alert groups: %s", err)
+	}
+
+	if _, err := b.ac.Reload(); err != nil {
+		return fmt.Errorf("failed to reload alertmanager: %s", err)
+	}
+
+	return nil
+}
+
 func (b *Bot) handleUnsubscribeCommand(m telebot.Context) error {
 	receiver := m.Chat().ID
 	if err := b.checkAuth(receiver); err != nil {
 		return err
+	}
+
+	if ok, err := b.ac.Config.IsRouteExists(receiver, nil); ok {
+		return b.ac.Config.RemoveRoute(receiver, nil)
+	} else if err != nil {
+		return fmt.Errorf("failed checking route existence: %s", err)
 	}
 
 	if err := b.makeActiveSubscribePages(receiver); err != nil {
@@ -262,18 +300,20 @@ func (b *Bot) handleCallback(m telebot.Context) error {
 			return fmt.Errorf("not found alert group by given prefix %s: %s", data, err)
 		}
 
-		b.ac.Config.AddRoute(receiver, group)
+		match := make(map[string]string)
+		match["alertgroup"] = group
+		b.ac.Config.AddRoute(receiver, match)
 
 		if _, err = b.ac.Reload(); err != nil {
 			return fmt.Errorf("failed to reload alertmanager: %s", err)
 		}
 	case "/unsubscribe":
-		group, err := b.findAlertGroupNameByPrefix(data)
+		match, err := b.ac.Config.FindMatchByPrefix(receiver, data)
 		if err != nil {
-			return fmt.Errorf("not found alert group by given prefix %s: %s", data, err)
+			return fmt.Errorf("failed to get match for given alert group prefix: %s", err)
 		}
 
-		b.ac.Config.RemoveRoute(receiver, group)
+		b.ac.Config.RemoveRoute(receiver, match)
 
 		if _, err = b.ac.Reload(); err != nil {
 			return fmt.Errorf("failed to reload alertmanager: %s", err)
@@ -448,7 +488,7 @@ func (b *Bot) findAlertGroupNameByPrefix(prefix string) (string, error) {
 		}
 	}
 
-	return "", errors.New("no one alert group found")
+	return "", ErrNotFound
 }
 
 func (b *Bot) checkAuth(receiver int64) error {
