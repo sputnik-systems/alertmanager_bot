@@ -1,0 +1,27 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: alertmanager.rules
+spec:
+  groups:
+  - name: alertmanager.rules
+    rules:
+    - alert: AlertmanagerFailedReload
+      annotations:
+        message: Reloading Alertmanager's configuration has failed for {{ $labels.namespace
+          }}/{{ $labels.pod}}.
+      expr: alertmanager_config_last_reload_successful{job="kube-prometheus-stack-alertmanager",namespace="monitoring"}
+        == 0
+      for: 10m
+      labels:
+        severity: warning
+    - alert: AlertmanagerMembersInconsistent
+      annotations:
+        message: Alertmanager has not found all other members of the cluster.
+      expr: |-
+        alertmanager_cluster_members{job="kube-prometheus-stack-alertmanager",namespace="monitoring"}
+          != on (service) GROUP_LEFT()
+        count by (service) (alertmanager_cluster_members{job="kube-prometheus-stack-alertmanager",namespace="monitoring"})
+      for: 5m
+      labels:
+        severity: critical
