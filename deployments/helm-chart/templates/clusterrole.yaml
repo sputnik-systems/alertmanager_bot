@@ -13,23 +13,24 @@ rules:
   verbs:
   - get
   - list
-  # - watch
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - prometheusrules
+  verbs:
+  - get
+  - list
 - apiGroups:
   - ""
   resources:
   - secrets
   verbs:
   - get
-  # - list
-  # - watch
 - apiGroups:
   - ""
   resources:
   - secrets
   verbs:
-  # - create
-  # - delete
-  # - deletecollection
   - patch
   - update
 {{- end }}

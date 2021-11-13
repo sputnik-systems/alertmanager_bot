@@ -1,0 +1,2 @@
+bases:
+- https://raw.githubusercontent.com/prometheus-community/helm-charts/kube-prometheus-stack-20.0.1/charts/kube-prometheus-stack/crds/crd-prometheusrules.yaml

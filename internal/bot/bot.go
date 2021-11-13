@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -10,16 +9,17 @@ import (
 	"sync"
 	"time"
 
-	vm "github.com/VictoriaMetrics/operator/api/v1beta1"
 	"github.com/prometheus/common/model"
 	"github.com/vcraescu/go-paginator/v2"
 	"github.com/vcraescu/go-paginator/v2/adapter"
 	"gopkg.in/tucnak/telebot.v3"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/sputnik-systems/alertmanager_bot/internal/alertmanager"
+	"github.com/sputnik-systems/alertmanager_bot/internal/monitoring/rules"
+	prom "github.com/sputnik-systems/alertmanager_bot/internal/monitoring/rules/prometheus"
+	vm "github.com/sputnik-systems/alertmanager_bot/internal/monitoring/rules/victoriametrics"
 )
 
 const (
@@ -49,13 +49,6 @@ type Bot struct {
 	mux   sync.Mutex
 	kc    client.Client
 	ac    *alertmanager.Alertmanager
-}
-
-func init() {
-	// hack for support victorimaetrics custom resources with kube client
-	if err := vm.AddToScheme(scheme.Scheme); err != nil {
-		panic(err)
-	}
 }
 
 func New(token, au, wu, tp string, ac types.NamespacedName, kc client.Client) (*Bot, error) {
@@ -337,7 +330,7 @@ func (b *Bot) handleCallback(m telebot.Context) error {
 }
 
 func (b *Bot) createAlertRuleGroupPages(receiver int64) error {
-	groups, err := b.getVMRuleGroups()
+	groups, err := b.getRuleGroupNames()
 	if err != nil {
 		return err
 	}
@@ -473,16 +466,19 @@ func (b *Bot) switchPage(receiver int64, direction string) error {
 	return nil
 }
 
-func (b *Bot) getVMRuleGroups() ([]string, error) {
-	rules := &vm.VMRuleList{}
-	if err := b.kc.List(context.Background(), rules); err != nil {
-		return nil, fmt.Errorf("failed to list VMRuleList: %s", err)
-	}
+func (b *Bot) getRuleGroupNames() ([]string, error) {
+	var r []rules.Rule
+	r = vm.Rules(b.kc)
+	r = append(r, prom.Rules(b.kc)...)
 
-	var groups []string
-	for _, rule := range rules.Items {
-		for _, group := range rule.Spec.Groups {
-			groups = append(groups, group.Name)
+	keys := make(map[string]struct{})
+	groups := make([]string, 0)
+	for _, rule := range r {
+		for _, group := range rule.GetGroupNames() {
+			if _, ok := keys[group]; !ok {
+				keys[group] = struct{}{}
+				groups = append(groups, group)
+			}
 		}
 	}
 
@@ -490,7 +486,7 @@ func (b *Bot) getVMRuleGroups() ([]string, error) {
 }
 
 func (b *Bot) findAlertGroupNameByPrefix(prefix string) (string, error) {
-	groups, err := b.getVMRuleGroups()
+	groups, err := b.getRuleGroupNames()
 	if err != nil {
 		return "", err
 	}

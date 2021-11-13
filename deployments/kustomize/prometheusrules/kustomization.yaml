@@ -1,0 +1,3 @@
+resources:
+  - alertmanager.rules.yaml
+  - node-network.yaml

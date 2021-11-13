@@ -18,6 +18,7 @@ minikube: # init minikube cluster if it does not exists and switch kubeconfig co
 		${MINIKUBE} profile list | grep ${MINIKUBE_PROFILE_NAME} || ${MINIKUBE} start --profile ${MINIKUBE_PROFILE_NAME} --kubernetes-version=${MINIKUBE_KUBERNETES_VERSION}
 		${KUBECTL} config use-context ${MINIKUBE_PROFILE_NAME}
 		${KUBECTL} kustomize deployments/kustomize/vm-operator | ${KUBECTL} apply -f -
+		${KUBECTL} kustomize deployments/kustomize/prometheus-operator | ${KUBECTL} apply -f -
 		${KUBECTL} kustomize deployments/kustomize | ${KUBECTL} apply -f -
 		${HELM} repo add grafana https://grafana.github.io/helm-charts
 		${HELM} upgrade --install --values deployments/helm.grafana.values.yaml grafana grafana/grafana
