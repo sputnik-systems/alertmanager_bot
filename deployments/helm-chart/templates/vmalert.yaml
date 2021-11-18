@@ -16,5 +16,7 @@ spec:
   notifier:
     url: http://vmalertmanager-{{ include "alertmanager-bot.fullname" . }}:9093
 
+  {{- with .Values.vmalert.extraArgs }}
   extraArgs:
     {{- toYaml .Values.vmalert.extraArgs | nindent 4 }}
+  {{- end }}
