@@ -86,6 +86,8 @@ oidc:
   clientSecret: ""
 
 alertmanager:
+  tag: v0.23.0
+
   config: |+
     global:
       resolve_timeout: 5m
