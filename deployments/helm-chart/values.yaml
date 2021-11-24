@@ -112,7 +112,7 @@ alertmanager:
 vmalert:
   tag: v1.61.1
 
-  extraArgs: []
+  extraArgs: {}
 
 victoriametrics:
   url: ""

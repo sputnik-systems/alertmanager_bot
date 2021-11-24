@@ -18,5 +18,5 @@ spec:
 
   {{- with .Values.vmalert.extraArgs }}
   extraArgs:
-    {{- toYaml .Values.vmalert.extraArgs | nindent 4 }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
