@@ -11,7 +11,7 @@ on:
 
 jobs:
   golangci:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
@@ -19,4 +19,3 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           version: v1.33.0
-          skip-pkg-cache: true
