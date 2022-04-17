@@ -13,3 +13,5 @@ spec:
 
   image:
     tag: {{ .Values.alertmanager.tag }}
+
+  configSecret: vmalertmanager-{{ include "alertmanager-bot.fullname" . }}
