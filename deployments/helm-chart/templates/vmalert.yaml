@@ -20,3 +20,14 @@ spec:
   extraArgs:
     {{- toYaml . | nindent 4 }}
   {{- end }}
+
+  selectAllByDefault: {{ .Values.vmalert.selectAllByDefault }}
+
+  {{- with .Values.vmalert.ruleNamespaceSelector }}
+  ruleNamespaceSelector:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.vmalert.ruleSelector }}
+  ruleSelector:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
