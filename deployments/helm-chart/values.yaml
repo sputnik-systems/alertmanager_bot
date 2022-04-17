@@ -114,5 +114,10 @@ vmalert:
 
   extraArgs: {}
 
+  selectAllByDefault: true
+
+  ruleNamespaceSelector: {}
+  ruleSelector: {}
+
 victoriametrics:
   url: ""
