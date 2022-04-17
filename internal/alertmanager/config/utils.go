@@ -5,15 +5,16 @@ import (
 )
 
 type route struct {
+	index    int64
 	receiver string
 	match    map[string]string
 }
 
 func listRoutes(in []*amcfg.Route, receiver string) []route {
 	out := make([]route, 0)
-	for _, value := range in {
+	for index, value := range in {
 		if value.Receiver == receiver {
-			out = append(out, route{value.Receiver, value.Match})
+			out = append(out, route{int64(index), value.Receiver, value.Match})
 		}
 	}
 
@@ -33,16 +34,16 @@ func getReceiverPosition(receivers []*amcfg.Receiver, receiver string) int64 {
 // get given route position in config file
 func getRoutePosition(in []*amcfg.Route, receiver string, match map[string]string) int64 {
 	routes := listRoutes(in, receiver)
-	for index, value := range routes {
+	for _, value := range routes {
 		if match != nil {
 			for k, v := range match {
 				if vv, ok := value.match[k]; ok && v == vv {
-					return int64(index)
+					return value.index
 				}
 			}
 		} else {
 			if value.match == nil {
-				return int64(index)
+				return value.index
 			}
 		}
 	}
