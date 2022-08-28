@@ -3,6 +3,7 @@ package alertmanager
 
 import (
 	"bytes"
+	"fmt"
 	tmplhtml "html/template"
 	"net/url"
 	"path/filepath"
@@ -110,6 +111,48 @@ var DefaultFuncs = FuncMap{
 	},
 	"stringSlice": func(s ...string) []string {
 		return s
+	},
+	"groupByLabelsAndStatus": func(alerts Alerts, labels ...string) map[string]map[string]map[string]interface{} {
+		result := make(map[string]map[string]map[string]interface{})
+		for _, alert := range alerts {
+			kv := make([]string, 0)
+			for ak, av := range alert.Labels {
+				for _, l := range labels {
+					if l == ak {
+						kv = append(kv, fmt.Sprintf("%s=%s", l, av))
+					}
+				}
+			}
+
+			sort.Strings(kv)
+			key := strings.Join(kv, ",")
+			if _, ok := result[key]; !ok {
+				result[key] = make(map[string]map[string]interface{})
+			}
+
+			if _, ok := result[key][alert.Status]; !ok {
+				result[key][alert.Status] = make(map[string]interface{})
+			}
+
+			result[key][alert.Status]["url"] = alert.GeneratorURL
+			if count, ok := result[key][alert.Status]["count"]; !ok {
+				result[key][alert.Status]["count"] = 1
+			} else {
+				i := count.(int)
+				result[key][alert.Status]["count"] = i + 1
+			}
+		}
+
+		return result
+	},
+	"parseLabelSetString": func(s string) map[string]string {
+		result := make(map[string]string)
+		for _, kv := range strings.Split(s, ",") {
+			v := strings.Split(kv, "=")
+			result[v[0]] = v[1]
+		}
+
+		return result
 	},
 }
 
@@ -244,7 +287,7 @@ func (as Alerts) Resolved() []Alert {
 }
 
 // Data assembles data for template expansion.
-func (t *Template) Data(recv string, groupLabels model.LabelSet, alerts ...*model.Alert) *Data {
+func (t *Template) Data(groupLabels model.LabelSet, alerts ...*model.Alert) *Data {
 	data := &Data{
 		// Receiver:          regexp.QuoteMeta(recv),
 		// Status:            string(types.Alerts(alerts...).Status()),
