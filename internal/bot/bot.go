@@ -13,7 +13,6 @@ import (
 	"github.com/vcraescu/go-paginator/v2"
 	"github.com/vcraescu/go-paginator/v2/adapter"
 	"gopkg.in/tucnak/telebot.v3"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/sputnik-systems/alertmanager_bot/internal/alertmanager"
@@ -51,10 +50,15 @@ type Bot struct {
 	ac    *alertmanager.Alertmanager
 }
 
-func New(token, au, wu, tp string, ac types.NamespacedName, kc client.Client) (*Bot, error) {
-	a, err := alertmanager.New(au, wu, tp, ac, kc)
+func New(token, au, wu, tp, ns, acd, acm string, kc client.Client) (*Bot, error) {
+	a, err := alertmanager.New(au, wu, tp, ns, acd, acm, kc)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize alertmanager client: %s", err)
+	}
+	if acm != "" {
+		if err := a.Config.Sync(); err != nil {
+			return nil, fmt.Errorf("failed to update alertmanager config: %s", err)
+		}
 	}
 
 	tb, err := telebot.NewBot(telebot.Settings{

@@ -7,8 +7,7 @@ import (
 )
 
 func main() {
-	err := app.Execute()
-	if err != nil {
+	if err := app.Execute(); err != nil {
 		fmt.Printf("failed to start bot: %s", err)
 	}
 }

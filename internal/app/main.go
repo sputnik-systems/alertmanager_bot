@@ -29,7 +29,8 @@ func Execute() error {
 
 	botRunCmd.PersistentFlags().String("kube.namespace", "default", "specify current k8s namespace")
 	botRunCmd.PersistentFlags().String("alertmanager.url", "http://localhost:9093", "alertmanager endpoint url")
-	botRunCmd.PersistentFlags().String("alertmanager.secret-name", "", "alertmanager secret name which used to stora config")
+	botRunCmd.PersistentFlags().String("alertmanager.dest-secret-name", "", "this secret will be used by alertmanager")
+	botRunCmd.PersistentFlags().String("alertmanager.manual-secret-name", "", "this secret should contain predefined custom user config, and it will be merged with alertmanager.dynamic-secret-name")
 	botRunCmd.PersistentFlags().String("bot.token", "", "bot token string (required)")
 	botRunCmd.PersistentFlags().String("bot.templates-path", "templates/default.tmpl", "bot message templates path")
 	botRunCmd.PersistentFlags().String("bot.webhook-url", "http://bot:8000/webhook", "bot webhook url")
@@ -40,7 +41,7 @@ func Execute() error {
 
 	persistentRequiredFlags := []string{
 		"bot.token",
-		"alertmanager.secret-name",
+		"alertmanager.dest-secret-name",
 	}
 	for _, value := range persistentRequiredFlags {
 		err = botRunCmd.MarkPersistentFlagRequired(value)
@@ -52,7 +53,8 @@ func Execute() error {
 	bindFlags := []string{
 		"kube.namespace",
 		"alertmanager.url",
-		"alertmanager.secret-name",
+		"alertmanager.dest-secret-name",
+		"alertmanager.manual-secret-name",
 		"bot.token",
 		"bot.templates-path",
 		"bot.webhook-url",
