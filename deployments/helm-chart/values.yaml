@@ -121,3 +121,19 @@ vmalert:
 
 victoriametrics:
   url: ""
+
+templates: {}
+#   default.tmpl: |+
+#     {{ define "telegram.default" }}
+#     {{ range .Alerts }}
+#     <b>status:</b> {{ if eq .Status "firing" }}🔥 <b>{{ .Status | toUpper }}</b> 🔥{{ else }}<b>{{ .Status | toUpper }}</b>{{ end }} | 📈 <a href="{{ .GeneratorURL }}">Graph</a>
+#     <b>severity:</b> {{ .Labels.severity }}
+#     <b>summary:</b> {{ .Annotations.summary }}
+#     <b>description:</b> {{ .Annotations.description }}
+#     <b>labels:</b> {{ range $key, $value := .Labels }}
+#     {{- if ne $key "severity" }}
+#         • <b>{{ $key }}</b>: {{ $value -}}
+#     {{- end -}}
+#     {{ end }}
+#     {{ end }}
+#     {{ end }}

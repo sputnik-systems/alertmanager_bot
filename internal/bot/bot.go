@@ -98,7 +98,7 @@ func (b *Bot) Start() {
 }
 
 func (b *Bot) ProcessWebhook(alerts []*model.Alert, receiver string) error {
-	text, err := b.ac.GetMessageText(receiver, alerts)
+	text, err := b.ac.GetMessageText(alerts)
 	if err != nil {
 		return fmt.Errorf("failed generating text from alert list: %s", err)
 	}
@@ -250,7 +250,7 @@ func (b *Bot) handleAlertsCommand(m telebot.Context) error {
 		return fmt.Errorf("failed to get alerts from alertmanager: %s", err)
 	}
 
-	text, err := b.ac.GetMessageText(strconv.FormatInt(receiver, 10), alerts)
+	text, err := b.ac.GetMessageText(alerts)
 	if err != nil {
 		return fmt.Errorf("failed generate text from alert list: %s", err)
 	}
