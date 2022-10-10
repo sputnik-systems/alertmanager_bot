@@ -48,6 +48,9 @@ spec:
             - --oidc.client-id=$(OIDC_CLIENT_ID)
             - --oidc.client-secret=$(OIDC_CLIENT_SECRET)
             {{- end }}
+            {{- if .Values.templates }}
+            - bot.templates-path=/templates/default.tmpl
+            {{- end }}
           env:
             - name: NAMESPACE
               valueFrom:
@@ -89,6 +92,19 @@ spec:
               port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.templates }}
+          volumeMounts:
+          {{- if .Values.templates }}
+            - mountPath: /templates
+              name: templates
+          {{- end }}
+          {{- end }}
+      {{- if .Values.templates }}
+      volumes:
+        - name: templates
+          configMap:
+            name: {{ include "alertmanager-bot.fullname" . }}-templates
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
