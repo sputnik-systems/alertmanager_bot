@@ -21,13 +21,13 @@ var (
 )
 
 type Config struct {
-	key types.NamespacedName
-	wh  []*amcfg.WebhookConfig
-	kc  client.Client
-	mux *sync.Mutex
+	kd, km *types.NamespacedName
+	wh     []*amcfg.WebhookConfig
+	kc     client.Client
+	mux    *sync.Mutex
 }
 
-func New(key types.NamespacedName, wu *url.URL, kc client.Client) *Config {
+func New(kd, km *types.NamespacedName, wu *url.URL, kc client.Client) *Config {
 	wc := &amcfg.WebhookConfig{
 		NotifierConfig: amcfg.NotifierConfig{
 			VSendResolved: true,
@@ -39,7 +39,8 @@ func New(key types.NamespacedName, wu *url.URL, kc client.Client) *Config {
 	wh := []*amcfg.WebhookConfig{wc}
 
 	return &Config{
-		key: key,
+		kd:  kd,
+		km:  km,
 		wh:  wh,
 		kc:  kc,
 		mux: &sync.Mutex{},
@@ -208,45 +209,70 @@ func (c *Config) FindMatchByPrefix(receiver int64, prefix string) (map[string]st
 	return nil, ErrNotFound
 }
 
-func (c *Config) getSecret() (*v1.Secret, error) {
-	secret := &v1.Secret{}
-
-	err := c.kc.Get(context.Background(), c.key, secret)
-	if err != nil {
-		return nil, err
-	}
-
-	if _, ok := secret.Data["alertmanager.yaml"]; !ok {
-		return nil, fmt.Errorf("secret not contain alertmanager.yaml file")
-	}
-
-	return secret, nil
-}
-
 func (c *Config) Get() (*amcfg.Config, error) {
-	secret, err := c.getSecret()
+	sd, err := c.getSecret(c.kd)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get secret with alertmanager config: %s", err)
 	}
 
-	conf, err := amcfg.Load(string(secret.Data["alertmanager.yaml"]))
+	conf, err := amcfg.Load(string(sd.Data["alertmanager.yaml"]))
 	if err != nil {
 		return nil, fmt.Errorf("failed unmarshal alertmanager.yaml file: %s", err)
+	}
+
+	if c.km != nil {
+		sm, err := c.getSecret(c.km)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get secret with alertmanager config: %s", err)
+		}
+
+		cm, err := amcfg.Load(string(sm.Data["alertmanager.yaml"]))
+		if err != nil {
+			return nil, fmt.Errorf("failed unmarshal alertmanager.yaml file: %s", err)
+		}
+
+		cm.Route.Routes = conf.Route.Routes
+		cm.Receivers = conf.Receivers
+
+		return cm, nil
 	}
 
 	return conf, nil
 }
 
+func (c *Config) Sync() error {
+	conf, err := c.Get()
+	if err != nil {
+		return fmt.Errorf("failed to sync alertmanager configs: %s", err)
+	}
+
+	return c.write(conf)
+}
+
+func (c *Config) getSecret(key *types.NamespacedName) (*v1.Secret, error) {
+	s := &v1.Secret{}
+
+	if err := c.kc.Get(context.Background(), *key, s); err != nil {
+		return nil, err
+	}
+
+	if _, ok := s.Data["alertmanager.yaml"]; !ok {
+		return nil, fmt.Errorf("secret not contain alertmanager.yaml file")
+	}
+
+	return s, nil
+}
+
 func (c *Config) write(conf *amcfg.Config) error {
-	secret, err := c.getSecret()
+	s, err := c.getSecret(c.kd)
 	if err != nil {
 		return fmt.Errorf("failed to get secret with alertmanager config: %s", err)
 	}
 
 	data := conf.String()
-	secret.Data["alertmanager.yaml"] = []byte(data)
+	s.Data["alertmanager.yaml"] = []byte(data)
 
-	err = c.kc.Update(context.Background(), secret)
+	err = c.kc.Update(context.Background(), s)
 	if err != nil {
 		return fmt.Errorf("failed to update alertmanager secret with config: %s", err)
 	}

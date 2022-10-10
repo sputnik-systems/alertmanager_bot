@@ -17,7 +17,7 @@ type Alertmanager struct {
 	*config.Config
 }
 
-func New(a, w, tp string, key types.NamespacedName, kc client.Client) (*Alertmanager, error) {
+func New(a, w, tp, ns, acd, acm string, kc client.Client) (*Alertmanager, error) {
 	if _, err := url.Parse(a); err != nil {
 		return nil, fmt.Errorf("given alertmanager url %s is incorrect: %s", a, err)
 	}
@@ -27,7 +27,14 @@ func New(a, w, tp string, key types.NamespacedName, kc client.Client) (*Alertman
 		return nil, fmt.Errorf("given webhook url %s is incorrect: %s", w, err)
 	}
 
-	c := config.New(key, wu, kc)
+	var kd, km *types.NamespacedName
+	kd = &types.NamespacedName{Namespace: ns, Name: acd}
+
+	if acm != "" {
+		km = &types.NamespacedName{Namespace: ns, Name: acm}
+	}
+
+	c := config.New(kd, km, wu, kc)
 
 	return &Alertmanager{url: a, tp: tp, Config: c}, nil
 }

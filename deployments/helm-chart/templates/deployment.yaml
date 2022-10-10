@@ -35,7 +35,8 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - bot
-            - --alertmanager.secret-name=vmalertmanager-{{ include "alertmanager-bot.fullname" . }}
+            - --alertmanager.dest-secret-name=vmalertmanager-{{ include "alertmanager-bot.fullname" . }}
+            - --alertmanager.manual-secret-name=vmalertmanager-{{ include "alertmanager-bot.fullname" . }}-manual
             - --alertmanager.url={{ include "alertmanager-bot.alertmanagerURL" . }}
             - --bot.webhook-url={{ include "alertmanager-bot.webhookURL" . }}
             {{- if .Values.bot.publicURL }}

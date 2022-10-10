@@ -14,7 +14,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
@@ -63,18 +62,16 @@ func botPreRunE(cmd *cobra.Command, args []string) error {
 	au := viper.GetString("alertmanager.url")
 	wu := viper.GetString("bot.webhook-url")
 	tp := viper.GetString("bot.templates-path")
-
-	ac := types.NamespacedName{
-		Namespace: viper.GetString("kube.namespace"),
-		Name:      viper.GetString("alertmanager.secret-name"),
-	}
+	ns := viper.GetString("kube.namespace")
+	acd := viper.GetString("alertmanager.dest-secret-name")
+	acm := viper.GetString("alertmanager.manual-secret-name")
 
 	kc, err := client.New(config.GetConfigOrDie(), client.Options{})
 	if err != nil {
 		return fmt.Errorf("kube client initialization failed: %s", err)
 	}
 
-	tb, err = bot.New(token, au, wu, tp, ac, kc)
+	tb, err = bot.New(token, au, wu, tp, ns, acd, acm, kc)
 	if err != nil {
 		return fmt.Errorf("bot initialization failed: %s", err)
 	}
