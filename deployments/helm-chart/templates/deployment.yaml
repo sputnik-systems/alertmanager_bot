@@ -50,7 +50,7 @@ spec:
             - --oidc.client-secret=$(OIDC_CLIENT_SECRET)
             {{- end }}
             {{- if .Values.templates }}
-            - bot.templates-path=/templates/default.tmpl
+            - --bot.templates-path=/templates/default.tmpl
             {{- end }}
           env:
             - name: NAMESPACE
