@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: sputniksystemsorg/alertmanager-bot
+  repository: ghcr.io/sputnik-systems/alertmanager_bot
   pullPolicy: IfNotPresent
 
 imagePullSecrets: []
@@ -79,16 +79,10 @@ bot:
   token: ""
   publicURL: ""
 
-oidc:
-  enabled: false
-  issuerURL: ""
-  clientID: ""
-  clientSecret: ""
-
 alertmanager:
-  tag: v0.23.0
-
-  config: |+
+  url: http://alertmanager:9093
+  destSecretName: vmalertmanager-default
+  configOverride: |+
     global:
       resolve_timeout: 5m
     
@@ -108,19 +102,6 @@ alertmanager:
         target_match:
           severity: 'warning'
         equal: ['alertname', 'dev', 'instance']
-
-vmalert:
-  tag: v1.61.1
-
-  extraArgs: {}
-
-  selectAllByDefault: true
-
-  ruleNamespaceSelector: {}
-  ruleSelector: {}
-
-victoriametrics:
-  url: ""
 
 templates: {}
 #   default.tmpl: |+

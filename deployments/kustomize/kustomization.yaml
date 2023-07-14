@@ -1,5 +1,0 @@
-bases:
-  - vmservicescrape
-  - vmagent
-  - vmsingle
-  - vmrules
