@@ -112,7 +112,7 @@ func (b *Bot) ProcessWebhook(alerts []*model.Alert, receiver string) error {
 		return fmt.Errorf("failed converting receiver string to int64")
 	}
 
-	_, err = b.b.Send(telebot.ChatID(id), text)
+	_, err = b.b.Send(telebot.ChatID(id), text, telebot.NoPreview)
 
 	return err
 }
@@ -259,7 +259,7 @@ func (b *Bot) handleAlertsCommand(m telebot.Context) error {
 		text = "no alerts"
 	}
 
-	return m.Send(text)
+	return m.Send(text, telebot.NoPreview)
 }
 
 func (b *Bot) handleCallback(m telebot.Context) error {
@@ -509,7 +509,7 @@ func (b *Bot) checkAuth(receiver int64) error {
 		return err
 	} else if !ok {
 		id := telebot.ChatID(receiver)
-		if _, err := b.b.Send(id, fmt.Sprintf(AuthFlowTextTemplate, RegistrationURL, receiver)); err != nil {
+		if _, err := b.b.Send(id, fmt.Sprintf(AuthFlowTextTemplate, RegistrationURL, receiver), telebot.NoPreview); err != nil {
 			return err
 		} else {
 			return ErrAuth

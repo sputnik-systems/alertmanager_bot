@@ -9,7 +9,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"golang.org/x/oauth2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
@@ -19,7 +18,6 @@ import (
 
 var (
 	tb *bot.Bot
-	oc oauth2.Config
 )
 
 func botPreRunE(cmd *cobra.Command, args []string) error {
