@@ -15,9 +15,10 @@ require (
 	github.com/prometheus/alertmanager v0.23.0
 	github.com/prometheus/common v0.32.1
 	github.com/spf13/cobra v1.2.1
-	github.com/spf13/viper v1.9.0
+	github.com/spf13/viper v1.13.0
 	github.com/vcraescu/go-paginator/v2 v2.0.0
-	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
+	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
+	gopkg.in/telebot.v3 v3.1.3 // indirect
 	gopkg.in/tucnak/telebot.v3 v3.0.0-20211108093419-844466d6faf3
 	k8s.io/api v0.22.3
 	k8s.io/apimachinery v0.22.3
