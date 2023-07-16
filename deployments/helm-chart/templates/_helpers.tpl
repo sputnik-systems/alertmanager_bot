@@ -69,10 +69,6 @@ Create the name of the service account to use
 {{- end }}
 {{- end }}
 
-{{- define "alertmanager-bot.alertmanagerURL" -}}
-{{- printf "http://vmalertmanager-%s:9093" (include "alertmanager-bot.fullname" .) -}}
-{{- end }}
-
 {{- define "alertmanager-bot.webhookURL" -}}
 {{- printf "http://%s:%.0f/webhook" (include "alertmanager-bot.fullname" .) .Values.service.port -}}
 {{- end }}
